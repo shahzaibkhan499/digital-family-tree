@@ -1,0 +1,23 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy Web
+        run: |
+          echo "Configure your deployment target here"
+          echo "Options: Vercel, Railway, Fly.io, AWS, GCP, Azure"
+
+      - name: Deploy API
+        run: |
+          echo "Configure your API deployment here"

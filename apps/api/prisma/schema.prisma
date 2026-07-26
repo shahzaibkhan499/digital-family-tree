@@ -1,0 +1,2730 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                         String                   @id @default(uuid())
+  displayId                  String                   @unique @default("")
+  email                      String                   @unique
+  name                       String
+  password                   String
+  role                       String                   @default("USER")
+  plan                       String                   @default("free")
+  refreshToken               String?
+  createdAt                  DateTime                 @default(now())
+  updatedAt                  DateTime                 @updatedAt
+  username                   String?                  @unique
+  profileSlug                String?                  @unique
+  emailVerified              Boolean                  @default(false)
+  accountStatus              String                   @default("active")
+  lastLoginAt                DateTime?
+  deletedAt                  DateTime?
+  firstName                  String?
+  middleName                 String?
+  lastName                   String?
+  displayName                String?
+  nickname                   String?
+  gender                     String?
+  dateOfBirth                DateTime?
+  placeOfBirth               String?
+  bloodGroup                 String?
+  maritalStatus              String?
+  nationality                String?
+  religion                   String?
+  languages                  String?
+  governmentId               String?
+  phone                      String?
+  whatsapp                   String?
+  alternativePhone           String?
+  country                    String?
+  province                   String?
+  city                       String?
+  postalCode                 String?
+  fullAddress                String?
+  bio                        String?
+  occupation                 String?
+  company                    String?
+  education                  String?
+  skills                     String?
+  interests                  String?
+  website                    String?
+  socialLinks                String?
+  fatherId                   String?
+  motherId                   String?
+  spouseId                   String?
+  childrenIds                String?
+  siblingIds                 String?
+  avatar                     String?
+  coverPhoto                 String?
+  privacySettings            String?
+  locale                     String?                  @default("en")
+  timezone                   String?                  @default("UTC")
+  twoFactorEnabled           Boolean                  @default(false)
+  twoFactorSecret            String?
+  failedLoginAttempts        Int                      @default(0)
+  lockedUntil                DateTime?
+  theme                      String?                  @default("system")
+  activities                 Activity[]
+  activityComments           ActivityComment[]
+  activityReactions          ActivityReaction[]
+  auditLogs                  AuditLog[]
+  bookmarks                  Bookmark[]
+  clans                      Clan[]
+  clanAdminGrants            ClanAdmin[]              @relation("ClanAdminGrants")
+  clanAdmins                 ClanAdmin[]
+  clanDirectory              ClanDirectory[]
+  clanDirectoryVerified      ClanDirectory[]          @relation("ClanDirVerified")
+  clanDocuments              ClanDocument[]
+  clanEvents                 ClanEvent[]
+  clanFollowers              ClanFollower[]
+  clanGalleryItems           ClanGallery[]
+  ClanHistory                ClanHistory[]
+  clanHistoryEntries         ClanHistoryEntry[]       @relation("ClanHistoryEditor")
+  moderatedHistories         ClanHistoryEntry[]       @relation("ClanHistoryModerator")
+  clanRequests               ClanRequest[]            @relation("ClanRequestsMade")
+  clanRequestsReviewed       ClanRequest[]            @relation("ClanRequestsReviewed")
+  communities                Community[]
+  communityAdminGrants       CommunityAdmin[]         @relation("CommunityAdminGrants")
+  communityAdmins            CommunityAdmin[]
+  communityDirectory         CommunityDirectory[]
+  communityDirectoryVerified CommunityDirectory[]     @relation("CommunityDirVerified")
+  communityDocuments         CommunityDocument[]
+  communityEvents            CommunityEvent[]
+  communityFollowers         CommunityFollower[]
+  communityGalleryItems      CommunityGallery[]
+  communityHistories         CommunityHistory[]
+  communityNews              CommunityNews[]
+  communityRequestsMade      CommunityRequest[]       @relation("CommunityRequestsMade")
+  communityRequestsReviewed  CommunityRequest[]       @relation("CommunityRequestsReviewed")
+  documentAccessLogs         DocumentAccessLog[]      @relation("DocAccessUser")
+  vaultAttachments           DocumentAttachment[]
+  vaultCollections           DocumentCollection[]
+  documentCollectionItems    DocumentCollectionItem[]
+  documentFolders            DocumentFolder[]
+  vaultGallery               DocumentGallery[]
+  vaultKnowledgeBase         DocumentKnowledgeBase[]
+  vaultReferences            DocumentReference[]
+  documentSharedBy           DocumentShare[]          @relation("ShareBy")
+  documentSharedWith         DocumentShare[]          @relation("ShareWith")
+  vaultDocuments             DocumentVault[]          @relation("VaultOwner")
+  vaultUploads               DocumentVault[]          @relation("VaultUploader")
+  documentVerifiers          DocumentVerification[]
+  documentVersions           DocumentVersion[]
+  eventActivities            EventActivity[]
+  EventAttendance            EventAttendance[]
+  eventComments              EventComment[]
+  eventCustomTemplates       EventCustomTemplate[]
+  eventDocumentsOwner        EventDocument[]          @relation("EventDocOwner")
+  eventDocumentsUploaded     EventDocument[]          @relation("EventDocUploader")
+  verifiedEvents             EventDocument[]          @relation("EventDocVerifier")
+  eventHistoryEntries        EventHistory[]
+  eventInvitationsSent       EventInvitation[]        @relation("EventInvitationsSent")
+  eventInvitations           EventInvitation[]        @relation("EventInvitations")
+  eventParticipants          EventParticipant[]
+  printVersions              EventPrintVersion[]
+  eventReactions             EventReaction[]
+  eventVersions              EventVersion[]
+  families                   Family[]
+  mergeRequestsReceived      FamilyMergeRequest[]     @relation("MergeApprover")
+  mergeRequestsSent          FamilyMergeRequest[]     @relation("MergeRequester")
+  invitationsSent            Invitation[]             @relation("InvitedBy")
+  knowledgeBaseEntries       KnowledgeBase[]
+  sessions                   LoginSession[]
+  memories                   Memory[]
+  memoryComments             MemoryComment[]
+  memoryReactions            MemoryReaction[]
+  notifications              Notification[]
+  notificationAuditLogs      NotificationAuditLog[]   @relation("AuditPerformer")
+  notificationDeliveries     NotificationDelivery[]
+  notificationPreferences    NotificationPreference?
+  notificationQueueItems     NotificationQueue[]      @relation("QueueUser")
+  fieldPrivacy               ProfileFieldPrivacy[]
+  subClans                   SubClan[]
+  eventCreatedEvents         TimelineEvent[]          @relation("EventCreator")
+  treeBookmarks              TreeBookmark[]
+  treeSearchHistory          TreeSearchHistory[]
+  treeViews                  TreeView[]
+  treeViewHistory            TreeViewHistory[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([city])
+  @@index([country])
+  @@index([name])
+}
+
+model LoginSession {
+  id        String   @id @default(uuid())
+  userId    String
+  ipAddress String?
+  userAgent String?
+  location  String?
+  loggedAt  DateTime @default(now())
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([loggedAt])
+}
+
+model Family {
+  id                String               @id @default(uuid())
+  displayId         String               @unique @default("")
+  name              String
+  description       String?
+  ownerId           String
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  clanId            String?
+  subClanId         String?
+  deletedAt         DateTime?
+  activities        Activity[]
+  clanRequests      ClanRequest[]
+  communityRequests CommunityRequest[]
+  clan              Clan?                @relation(fields: [clanId], references: [id])
+  owner             User                 @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  subClan           SubClan?             @relation(fields: [subClanId], references: [id])
+  members           FamilyMember[]
+  mergeSent         FamilyMergeRequest[] @relation("SourceFamily")
+  mergeReceived     FamilyMergeRequest[] @relation("TargetFamily")
+  invitations       Invitation[]
+  memories          Memory[]
+  timelineEvents    TimelineEvent[]
+
+  @@index([ownerId])
+  @@index([clanId])
+  @@index([name])
+  @@index([subClanId])
+  @@index([deletedAt])
+}
+
+model FamilyMember {
+  id                String          @id @default(uuid())
+  displayId         String          @unique @default("")
+  sharedId          String?
+  familyId          String
+  firstName         String
+  lastName          String
+  middleName        String?
+  nickname          String?
+  birthDate         DateTime?
+  deathDate         DateTime?
+  gender            String?
+  bio               String?
+  avatar            String?
+  email             String?
+  phone             String?
+  whatsapp          String?
+  address           String?
+  city              String?
+  country           String?
+  occupation        String?
+  notes             String?
+  governmentId      String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  deletedAt         DateTime?
+  duplicateSource   DuplicatePair[] @relation("DuplicateSource")
+  duplicateTarget   DuplicatePair[] @relation("DuplicateTarget")
+  family            Family          @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  memoryMembers     MemoryMember[]
+  fromRelationships Relationship[]  @relation("FromMember")
+  toRelationships   Relationship[]  @relation("ToMember")
+  timelineEvents    TimelineEvent[]
+
+  @@index([familyId])
+  @@index([sharedId])
+  @@index([displayId])
+  @@index([email])
+  @@index([phone])
+  @@index([firstName, lastName])
+  @@index([firstName, lastName, birthDate])
+  @@index([governmentId])
+  @@index([deletedAt])
+}
+
+model Relationship {
+  id           String       @id @default(uuid())
+  displayId    String       @unique @default("")
+  fromMemberId String
+  toMemberId   String
+  type         String
+  createdAt    DateTime     @default(now())
+  fromMember   FamilyMember @relation("FromMember", fields: [fromMemberId], references: [id], onDelete: Cascade)
+  toMember     FamilyMember @relation("ToMember", fields: [toMemberId], references: [id], onDelete: Cascade)
+
+  @@unique([fromMemberId, toMemberId, type])
+  @@index([fromMemberId])
+  @@index([toMemberId])
+  @@index([type])
+}
+
+model Activity {
+  id          String             @id @default(uuid())
+  userId      String
+  familyId    String?
+  entityType  String?
+  entityId    String?
+  entityName  String?
+  createdAt   DateTime           @default(now())
+  createdBy   String?
+  description String?
+  displayId   String             @unique @default("")
+  eventType   String
+  memberId    String?
+  title       String
+  updatedAt   DateTime           @updatedAt
+  visibility  String             @default("FAMILY")
+  metadata    Json?
+  family      Family?            @relation(fields: [familyId], references: [id])
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments    ActivityComment[]
+  media       ActivityMedia[]
+  reactions   ActivityReaction[]
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([createdAt])
+  @@index([eventType])
+  @@index([visibility])
+  @@index([userId, createdAt])
+  @@index([familyId, createdAt])
+  @@index([eventType, createdAt])
+}
+
+model ActivityMedia {
+  id         String   @id @default(uuid())
+  activityId String
+  url        String
+  type       String   @default("IMAGE")
+  alt        String?
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@index([activityId])
+}
+
+model ActivityComment {
+  id         String   @id @default(uuid())
+  activityId String
+  userId     String
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([activityId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model ActivityReaction {
+  id         String   @id @default(uuid())
+  activityId String
+  userId     String
+  type       String   @default("LIKE")
+  createdAt  DateTime @default(now())
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, userId, type])
+  @@index([activityId])
+  @@index([userId])
+}
+
+model Invitation {
+  id          String   @id @default(uuid())
+  familyId    String
+  email       String
+  role        String   @default("MEMBER")
+  invitedById String
+  token       String   @unique
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+  family      Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  invitedBy   User     @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@index([familyId])
+  @@index([email])
+  @@index([token])
+  @@index([status])
+}
+
+model FamilyMergeRequest {
+  id             String    @id @default(uuid())
+  displayId      String    @unique @default("")
+  sourceFamilyId String
+  targetFamilyId String
+  requesterId    String
+  approverId     String?
+  status         String    @default("PENDING")
+  conflictData   String?
+  metadata       String?
+  resolvedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  approver       User?     @relation("MergeApprover", fields: [approverId], references: [id])
+  requester      User      @relation("MergeRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  sourceFamily   Family    @relation("SourceFamily", fields: [sourceFamilyId], references: [id], onDelete: Cascade)
+  targetFamily   Family    @relation("TargetFamily", fields: [targetFamilyId], references: [id], onDelete: Cascade)
+
+  @@index([sourceFamilyId])
+  @@index([targetFamilyId])
+  @@index([requesterId])
+  @@index([status])
+}
+
+model MergeAuditLog {
+  id             String   @id @default(uuid())
+  mergeRequestId String
+  action         String
+  performedById  String
+  details        String?
+  createdAt      DateTime @default(now())
+
+  @@index([mergeRequestId])
+  @@index([performedById])
+  @@index([createdAt])
+}
+
+model Notification {
+  id         String                 @id @default(uuid())
+  displayId  String                 @unique @default("")
+  userId     String
+  title      String
+  message    String
+  type       String
+  category   String                 @default("GENERAL")
+  priority   String                 @default("NORMAL")
+  icon       String?
+  actionUrl  String?
+  metadata   Json?
+  isRead     Boolean                @default(false)
+  readAt     DateTime?
+  isArchived Boolean                @default(false)
+  createdBy  String?
+  expiresAt  DateTime?
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  auditLogs  NotificationAuditLog[] @relation("AuditNotification")
+  deliveries NotificationDelivery[]
+
+  @@index([userId])
+  @@index([type])
+  @@index([category])
+  @@index([priority])
+  @@index([isRead])
+  @@index([isArchived])
+  @@index([createdAt])
+  @@index([userId, isRead])
+  @@index([userId, isArchived])
+}
+
+model NotificationPreference {
+  id                      String   @id @default(uuid())
+  userId                  String   @unique
+  emailNotifications      Boolean  @default(true)
+  pushNotifications       Boolean  @default(true)
+  inAppNotifications      Boolean  @default(true)
+  birthdayReminders       Boolean  @default(true)
+  anniversaryReminders    Boolean  @default(true)
+  invitationNotifications Boolean  @default(true)
+  familyUpdates           Boolean  @default(true)
+  securityAlerts          Boolean  @default(true)
+  adminAnnouncements      Boolean  @default(true)
+  marketingEmails         Boolean  @default(false)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model NotificationDelivery {
+  id             String       @id @default(uuid())
+  notificationId String
+  userId         String
+  channel        String
+  status         String       @default("PENDING")
+  attempts       Int          @default(0)
+  lastAttemptAt  DateTime?
+  deliveredAt    DateTime?
+  errorMessage   String?
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([notificationId])
+  @@index([userId])
+  @@index([channel])
+  @@index([status])
+  @@index([userId, channel])
+}
+
+model NotificationTemplate {
+  id        String   @id @default(uuid())
+  type      String   @unique
+  category  String   @default("GENERAL")
+  title     String
+  message   String
+  icon      String?
+  actionUrl String?
+  priority  String   @default("NORMAL")
+  isActive  Boolean  @default(true)
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([category])
+  @@index([isActive])
+}
+
+model NotificationAuditLog {
+  id             String       @id @default(uuid())
+  notificationId String
+  performedById  String
+  action         String
+  details        Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime     @default(now())
+  notification   Notification @relation("AuditNotification", fields: [notificationId], references: [id], onDelete: Cascade)
+  performer      User         @relation("AuditPerformer", fields: [performedById], references: [id], onDelete: Cascade)
+
+  @@index([notificationId])
+  @@index([performedById])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model NotificationQueue {
+  id           String    @id @default(uuid())
+  userId       String
+  type         String
+  category     String    @default("GENERAL")
+  priority     String    @default("NORMAL")
+  title        String
+  message      String
+  icon         String?
+  actionUrl    String?
+  metadata     Json?
+  status       String    @default("PENDING")
+  scheduledFor DateTime  @default(now())
+  processedAt  DateTime?
+  attempts     Int       @default(0)
+  maxAttempts  Int       @default(3)
+  errorMessage String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  user         User      @relation("QueueUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([scheduledFor])
+  @@index([status, scheduledFor])
+}
+
+model Memory {
+  id          String           @id @default(uuid())
+  displayId   String           @unique @default("")
+  title       String
+  description String?
+  story       String?
+  date        DateTime?
+  location    String?
+  visibility  String           @default("FAMILY")
+  tags        String?
+  isHidden    Boolean          @default(false)
+  userId      String
+  familyId    String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  clanId      String?
+  communityId String?
+  subClanId   String?
+  clan        Clan?            @relation(fields: [clanId], references: [id])
+  community   Community?       @relation(fields: [communityId], references: [id])
+  family      Family           @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  subClan     SubClan?         @relation(fields: [subClanId], references: [id])
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments    MemoryComment[]
+  media       MemoryMedia[]
+  members     MemoryMember[]
+  reactions   MemoryReaction[]
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([date])
+  @@index([visibility])
+  @@index([isHidden])
+  @@index([familyId, date])
+  @@index([userId, createdAt])
+  @@index([subClanId])
+  @@index([clanId])
+  @@index([communityId])
+}
+
+model MemoryMedia {
+  id        String   @id @default(uuid())
+  memoryId  String
+  url       String
+  type      String   @default("IMAGE")
+  alt       String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  memory    Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@index([memoryId])
+}
+
+model MemoryMember {
+  id       String       @id @default(uuid())
+  memoryId String
+  memberId String
+  member   FamilyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memory   Memory       @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@unique([memoryId, memberId])
+  @@index([memoryId])
+  @@index([memberId])
+}
+
+model MemoryComment {
+  id        String   @id @default(uuid())
+  memoryId  String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  memory    Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([memoryId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model MemoryReaction {
+  id        String   @id @default(uuid())
+  memoryId  String
+  userId    String
+  type      String   @default("LIKE")
+  createdAt DateTime @default(now())
+  memory    Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([memoryId, userId, type])
+  @@index([memoryId])
+  @@index([userId])
+}
+
+model TimelineEvent {
+  id                 String                 @id @default(uuid())
+  displayId          String                 @unique @default("")
+  familyId           String
+  memberId           String?
+  eventType          String
+  title              String
+  description        String?
+  date               DateTime?
+  location           String?
+  metadata           Json?
+  isAuto             Boolean                @default(false)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  color              String?
+  coverImage         String?
+  createdById        String?
+  mapLink            String?
+  status             String                 @default("UPCOMING")
+  time               String?
+  venue              String?
+  clanId             String?
+  communityId        String?
+  subClanId          String?
+  visibility         String                 @default("FAMILY")
+  archived           Boolean                @default(false)
+  cancellationReason String?
+  cancelledAt        DateTime?
+  category           String                 @default("Custom")
+  coordinates        Json?
+  country            String?
+  deletedAt          DateTime?
+  endDate            DateTime?
+  featured           Boolean                @default(false)
+  isAllDay           Boolean                @default(false)
+  keywords           String[]
+  language           String?
+  maxAttendees       Int?
+  parentEventId      String?
+  pinned             Boolean                @default(false)
+  publishedAt        DateTime?
+  recurrence         String?
+  recurrenceRule     String?
+  rsvpDeadline       DateTime?
+  scheduledAt        DateTime?
+  seriesId           String?
+  slug               String                 @unique @default("")
+  subtitle           String?
+  tags               String[]
+  timezone           String?
+  verified           Boolean                @default(false)
+  awardInfo          AwardInformation?
+  birthInfo          BirthInformation?
+  businessInfo       BusinessInformation?
+  deathInfo          DeathInformation?
+  educationInfo      EducationInformation?
+  employmentInfo     EmploymentInformation?
+  activities         EventActivity[]
+  EventAttendance    EventAttendance[]
+  comments           EventComment[]
+  documents          EventDocument[]
+  history            EventHistory[]
+  invitations        EventInvitation[]
+  media              EventMedia[]
+  participants       EventParticipant[]
+  printVersions      EventPrintVersion?
+  reactions          EventReaction[]
+  reminders          EventReminder[]
+  searchTags         EventSearchTag[]
+  summary            EventSummary?
+  versions           EventVersion[]
+  marriageInfo       MarriageInformation?
+  migrationInfo      MigrationInformation?
+  militaryInfo       MilitaryInformation?
+  clan               Clan?                  @relation(fields: [clanId], references: [id])
+  community          Community?             @relation(fields: [communityId], references: [id])
+  createdBy          User?                  @relation("EventCreator", fields: [createdById], references: [id])
+  family             Family                 @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  member             FamilyMember?          @relation(fields: [memberId], references: [id])
+  subClan            SubClan?               @relation(fields: [subClanId], references: [id])
+
+  @@index([familyId])
+  @@index([memberId])
+  @@index([eventType])
+  @@index([category])
+  @@index([date])
+  @@index([status])
+  @@index([familyId, date])
+  @@index([eventType, date])
+  @@index([familyId, status])
+  @@index([visibility])
+  @@index([subClanId])
+  @@index([clanId])
+  @@index([communityId])
+  @@index([createdById])
+  @@index([deletedAt])
+  @@index([tags])
+  @@index([seriesId])
+  @@index([parentEventId])
+}
+
+model EventParticipant {
+  id         String        @id @default(uuid())
+  eventId    String
+  userId     String
+  rsvpStatus String        @default("PENDING")
+  rsvpDate   DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  event      TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+  @@index([rsvpStatus])
+}
+
+model EventReminder {
+  id              String        @id @default(uuid())
+  eventId         String
+  userId          String
+  reminderType    String
+  scheduledAt     DateTime
+  sent            Boolean       @default(false)
+  sentAt          DateTime?
+  createdAt       DateTime      @default(now())
+  deliveryChannel String        @default("IN_APP")
+  isRecurring     Boolean       @default(false)
+  lastSentAt      DateTime?
+  nextSendAt      DateTime?
+  recurrenceRule  String?
+  event           TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([userId])
+  @@index([scheduledAt])
+  @@index([sent, scheduledAt])
+  @@index([nextSendAt])
+}
+
+model EventMedia {
+  id             String        @id @default(uuid())
+  eventId        String
+  url            String
+  type           String        @default("IMAGE")
+  caption        String?
+  order          Int           @default(0)
+  createdAt      DateTime      @default(now())
+  fileName       String?
+  fileSize       Int?
+  isDownloadable Boolean       @default(true)
+  isFeatured     Boolean       @default(false)
+  mimeType       String?
+  thumbnailUrl   String?
+  uploadedById   String?
+  event          TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([type])
+}
+
+model DuplicatePair {
+  id              String       @id @default(uuid())
+  displayId       String       @unique @default("")
+  sourceMemberId  String
+  targetMemberId  String
+  confidenceScore Float
+  matchFactors    Json
+  status          String       @default("PENDING")
+  reviewedById    String?
+  reviewedAt      DateTime?
+  mergedById      String?
+  mergedAt        DateTime?
+  mergeSnapshotId String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  sourceMember    FamilyMember @relation("DuplicateSource", fields: [sourceMemberId], references: [id], onDelete: Cascade)
+  targetMember    FamilyMember @relation("DuplicateTarget", fields: [targetMemberId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceMemberId, targetMemberId])
+  @@index([sourceMemberId])
+  @@index([targetMemberId])
+  @@index([confidenceScore])
+  @@index([status])
+  @@index([status, confidenceScore])
+}
+
+model MergeSnapshot {
+  id             String    @id @default(uuid())
+  displayId      String    @unique @default("")
+  sourceMemberId String
+  targetMemberId String
+  sourceSnapshot Json
+  targetSnapshot Json
+  mergeResult    Json
+  strategy       String
+  performedById  String
+  undone         Boolean   @default(false)
+  undoneAt       DateTime?
+  undoneById     String?
+  createdAt      DateTime  @default(now())
+
+  @@index([sourceMemberId])
+  @@index([targetMemberId])
+  @@index([performedById])
+  @@index([undone])
+  @@index([performedById, undone])
+}
+
+model DiscoveryRecommendation {
+  id              String   @id @default(uuid())
+  userId          String
+  targetType      String
+  targetId        String
+  confidenceScore Float
+  matchFactors    Json
+  viewed          Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+  @@index([targetType, targetId])
+  @@index([confidenceScore])
+  @@index([userId, confidenceScore])
+}
+
+model Clan {
+  id             String             @id @default(uuid())
+  displayId      String             @unique @default("")
+  name           String
+  slug           String             @unique
+  description    String?
+  history        String?
+  origin         String?
+  region         String?
+  country        String?
+  logo           String?
+  banner         String?
+  website        String?
+  verified       Boolean            @default(false)
+  founder        String?
+  status         String             @default("ACTIVE")
+  privacy        String             @default("PUBLIC")
+  ownerId        String
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  communityId    String?
+  deletedAt      DateTime?
+  motto          String?
+  symbol         String?
+  community      Community?         @relation(fields: [communityId], references: [id])
+  owner          User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  aiSummaries    ClanAISummary[]
+  admins         ClanAdmin[]
+  directory      ClanDirectory[]
+  documents      ClanDocument[]
+  events         ClanEvent[]
+  followers      ClanFollower[]
+  galleryItems   ClanGallery[]
+  histories      ClanHistory[]
+  historyEntries ClanHistoryEntry[]
+  locations      ClanLocation[]
+  reputation     ClanReputation?
+  requests       ClanRequest[]
+  families       Family[]
+  memories       Memory[]
+  subClans       SubClan[]
+  timelineEvents TimelineEvent[]
+
+  @@index([ownerId])
+  @@index([slug])
+  @@index([name])
+  @@index([country])
+  @@index([status])
+  @@index([verified])
+  @@index([communityId])
+  @@index([deletedAt])
+}
+
+model Community {
+  id             String               @id @default(uuid())
+  displayId      String               @unique @default("")
+  name           String
+  slug           String               @unique
+  description    String?
+  history        String?
+  origin         String?
+  region         String?
+  country        String?
+  logo           String?
+  banner         String?
+  website        String?
+  verified       Boolean              @default(false)
+  founder        String?
+  status         String               @default("ACTIVE")
+  privacy        String               @default("PUBLIC")
+  ownerId        String
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  contact        String?
+  countries      String?
+  deletedAt      DateTime?
+  foundedDate    DateTime?
+  languages      String?
+  population     Int                  @default(0)
+  seoMetadata    Json?
+  clans          Clan[]
+  owner          User                 @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  aiSummaries    CommunityAISummary[]
+  admins         CommunityAdmin[]
+  directory      CommunityDirectory[]
+  documents      CommunityDocument[]
+  events         CommunityEvent[]
+  followers      CommunityFollower[]
+  galleryItems   CommunityGallery[]
+  histories      CommunityHistory[]
+  locations      CommunityLocation[]
+  newsItems      CommunityNews[]
+  reputation     CommunityReputation?
+  requests       CommunityRequest[]
+  memories       Memory[]
+  timelineEvents TimelineEvent[]
+
+  @@index([ownerId])
+  @@index([slug])
+  @@index([name])
+  @@index([country])
+  @@index([status])
+  @@index([verified])
+  @@index([deletedAt])
+}
+
+model SubClan {
+  id              String          @id @default(uuid())
+  displayId       String          @unique @default("")
+  name            String
+  slug            String
+  description     String?
+  history         String?
+  origin          String?
+  region          String?
+  country         String?
+  logo            String?
+  banner          String?
+  founder         String?
+  status          String          @default("ACTIVE")
+  privacy         String          @default("PUBLIC")
+  ownerId         String
+  clanId          String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  deletedAt       DateTime?
+  parentSubClanId String?
+  families        Family[]
+  memories        Memory[]
+  clan            Clan            @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  owner           User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  parentSubClan   SubClan?        @relation("SubClanChildren", fields: [parentSubClanId], references: [id])
+  childSubClans   SubClan[]       @relation("SubClanChildren")
+  timelineEvents  TimelineEvent[]
+
+  @@unique([clanId, slug])
+  @@index([ownerId])
+  @@index([clanId])
+  @@index([slug])
+  @@index([name])
+  @@index([status])
+  @@index([parentSubClanId])
+  @@index([deletedAt])
+}
+
+model ClanRequest {
+  id            String    @id @default(uuid())
+  displayId     String    @unique @default("")
+  type          String    @default("JOIN")
+  status        String    @default("PENDING")
+  message       String?
+  response      String?
+  clanId        String
+  familyId      String
+  requestedById String
+  reviewedById  String?
+  reviewedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  clan          Clan      @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  family        Family    @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  requestedBy   User      @relation("ClanRequestsMade", fields: [requestedById], references: [id], onDelete: Cascade)
+  reviewedBy    User?     @relation("ClanRequestsReviewed", fields: [reviewedById], references: [id])
+
+  @@index([clanId])
+  @@index([familyId])
+  @@index([requestedById])
+  @@index([status])
+  @@index([type])
+}
+
+model ClanAdmin {
+  id          String   @id @default(uuid())
+  displayId   String   @unique @default("")
+  role        String   @default("ADMIN")
+  userId      String
+  clanId      String
+  grantedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  clan        Clan     @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  grantedBy   User?    @relation("ClanAdminGrants", fields: [grantedById], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([clanId, userId])
+  @@index([userId])
+  @@index([clanId])
+}
+
+model ClanHistoryEntry {
+  id               String    @id @default(uuid())
+  displayId        String    @unique @default("")
+  section          String
+  content          String
+  version          Int       @default(1)
+  clanId           String
+  editedById       String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  moderatedAt      DateTime?
+  moderationStatus String    @default("APPROVED")
+  moderatorId      String?
+  moderatorNote    String?
+  clan             Clan      @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  editedBy         User      @relation("ClanHistoryEditor", fields: [editedById], references: [id], onDelete: Cascade)
+  moderator        User?     @relation("ClanHistoryModerator", fields: [moderatorId], references: [id])
+
+  @@index([clanId])
+  @@index([section])
+  @@index([editedById])
+  @@index([moderationStatus])
+  @@index([moderatorId])
+}
+
+model EventInvitation {
+  id          String        @id @default(uuid())
+  displayId   String        @unique @default("")
+  eventId     String
+  userId      String
+  invitedById String
+  scope       String        @default("INDIVIDUAL")
+  status      String        @default("PENDING")
+  message     String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  event       TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  invitedBy   User          @relation("EventInvitationsSent", fields: [invitedById], references: [id], onDelete: Cascade)
+  user        User          @relation("EventInvitations", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+  @@index([status])
+  @@index([scope])
+}
+
+model ProfileFieldPrivacy {
+  id         String   @id @default(uuid())
+  userId     String
+  fieldName  String
+  visibility String   @default("PUBLIC")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, fieldName])
+  @@index([userId])
+}
+
+model CommunityAdmin {
+  id          String    @id @default(uuid())
+  displayId   String    @unique @default("")
+  communityId String
+  userId      String
+  role        String    @default("ADMIN")
+  grantedById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  grantedBy   User?     @relation("CommunityAdminGrants", fields: [grantedById], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([communityId, userId])
+  @@index([userId])
+  @@index([communityId])
+  @@index([role])
+}
+
+model CommunityRequest {
+  id            String    @id @default(uuid())
+  displayId     String    @unique @default("")
+  communityId   String
+  familyId      String
+  requestedById String
+  status        String    @default("PENDING")
+  message       String?
+  response      String?
+  reviewedById  String?
+  reviewedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  community     Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  family        Family    @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  requestedBy   User      @relation("CommunityRequestsMade", fields: [requestedById], references: [id], onDelete: Cascade)
+  reviewedBy    User?     @relation("CommunityRequestsReviewed", fields: [reviewedById], references: [id])
+
+  @@index([communityId])
+  @@index([familyId])
+  @@index([requestedById])
+  @@index([status])
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  entityType    String
+  entityId      String
+  action        String
+  performedById String
+  oldValues     Json?
+  newValues     Json?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+  performer     User     @relation(fields: [performedById], references: [id], onDelete: Cascade)
+
+  @@index([entityType, entityId])
+  @@index([performedById])
+  @@index([action])
+  @@index([createdAt])
+  @@index([entityType, entityId, createdAt])
+}
+
+model CommunityHistory {
+  id          String    @id @default(uuid())
+  displayId   String    @unique @default("")
+  communityId String
+  type        String
+  title       String
+  content     String
+  date        DateTime?
+  period      String?
+  location    String?
+  imageUrl    String?
+  source      String?
+  authorId    String
+  verified    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@index([communityId])
+  @@index([type])
+  @@index([authorId])
+  @@index([date])
+  @@index([verified])
+}
+
+model CommunityGallery {
+  id           String    @id @default(uuid())
+  displayId    String    @unique @default("")
+  communityId  String
+  type         String
+  title        String
+  description  String?
+  url          String
+  thumbnailUrl String?
+  uploadedById String
+  verified     Boolean   @default(false)
+  order        Int       @default(0)
+  createdAt    DateTime  @default(now())
+  community    Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  uploadedBy   User      @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  @@index([communityId])
+  @@index([type])
+  @@index([uploadedById])
+  @@index([verified])
+}
+
+model CommunityDirectory {
+  id           String    @id @default(uuid())
+  displayId    String    @unique @default("")
+  communityId  String
+  userId       String
+  role         String    @default("MEMBER")
+  verified     Boolean   @default(false)
+  status       String    @default("ACTIVE")
+  joinedAt     DateTime  @default(now())
+  verifiedAt   DateTime?
+  verifiedById String?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  community    Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verifiedBy   User?     @relation("CommunityDirVerified", fields: [verifiedById], references: [id])
+
+  @@unique([communityId, userId])
+  @@index([communityId])
+  @@index([userId])
+  @@index([role])
+  @@index([verified])
+  @@index([status])
+}
+
+model CommunityEvent {
+  id           String    @id @default(uuid())
+  displayId    String    @unique @default("")
+  communityId  String
+  type         String
+  title        String
+  description  String?
+  startDate    DateTime
+  endDate      DateTime?
+  location     String?
+  isVirtual    Boolean   @default(false)
+  meetingUrl   String?
+  organizerId  String
+  maxAttendees Int?
+  status       String    @default("UPCOMING")
+  metadata     Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  community    Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  organizer    User      @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+
+  @@index([communityId])
+  @@index([type])
+  @@index([startDate])
+  @@index([status])
+  @@index([organizerId])
+}
+
+model CommunityNews {
+  id          String    @id @default(uuid())
+  displayId   String    @unique @default("")
+  communityId String
+  type        String
+  title       String
+  content     String
+  authorId    String
+  publishedAt DateTime?
+  featured    Boolean   @default(false)
+  status      String    @default("PUBLISHED")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@index([communityId])
+  @@index([type])
+  @@index([authorId])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([featured])
+}
+
+model CommunityDocument {
+  id            String    @id @default(uuid())
+  displayId     String    @unique @default("")
+  communityId   String
+  type          String
+  title         String
+  description   String?
+  fileUrl       String?
+  authorId      String
+  publishedDate DateTime?
+  verified      Boolean   @default(false)
+  status        String    @default("ACTIVE")
+  metadata      Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  author        User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  community     Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@index([communityId])
+  @@index([type])
+  @@index([authorId])
+  @@index([verified])
+  @@index([status])
+}
+
+model CommunityLocation {
+  id          String    @id @default(uuid())
+  communityId String
+  type        String
+  country     String
+  city        String?
+  latitude    Float?
+  longitude   Float?
+  population  Int?
+  year        Int?
+  createdAt   DateTime  @default(now())
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@index([communityId])
+  @@index([type])
+  @@index([country])
+  @@index([communityId, type])
+}
+
+model CommunityFollower {
+  id          String    @id @default(uuid())
+  communityId String
+  userId      String
+  followedAt  DateTime  @default(now())
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([communityId, userId])
+  @@index([communityId])
+  @@index([userId])
+}
+
+model CommunityReputation {
+  id                String    @id @default(uuid())
+  communityId       String    @unique
+  trustScore        Float     @default(0)
+  heritageScore     Float     @default(0)
+  contributionScore Float     @default(0)
+  totalFollowers    Int       @default(0)
+  totalMembers      Int       @default(0)
+  totalFamilies     Int       @default(0)
+  totalClans        Int       @default(0)
+  lastCalculatedAt  DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  community         Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@index([communityId])
+  @@index([trustScore])
+  @@index([heritageScore])
+}
+
+model ClanHistory {
+  id        String    @id @default(uuid())
+  displayId String    @unique @default("")
+  clanId    String
+  type      String
+  title     String
+  content   String
+  date      DateTime?
+  period    String?
+  location  String?
+  imageUrl  String?
+  source    String?
+  authorId  String
+  verified  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  clan      Clan      @relation(fields: [clanId], references: [id], onDelete: Cascade)
+
+  @@index([clanId])
+  @@index([type])
+  @@index([authorId])
+  @@index([date])
+  @@index([verified])
+}
+
+model ClanGallery {
+  id           String   @id @default(uuid())
+  displayId    String   @unique @default("")
+  clanId       String
+  type         String
+  title        String
+  description  String?
+  url          String
+  thumbnailUrl String?
+  uploadedById String
+  verified     Boolean  @default(false)
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+  clan         Clan     @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  @@index([clanId])
+  @@index([type])
+  @@index([uploadedById])
+}
+
+model ClanDirectory {
+  id           String    @id @default(uuid())
+  displayId    String    @unique @default("")
+  clanId       String
+  userId       String
+  role         String    @default("MEMBER")
+  verified     Boolean   @default(false)
+  status       String    @default("ACTIVE")
+  joinedAt     DateTime  @default(now())
+  verifiedAt   DateTime?
+  verifiedById String?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  clan         Clan      @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verifiedBy   User?     @relation("ClanDirVerified", fields: [verifiedById], references: [id])
+
+  @@unique([clanId, userId])
+  @@index([clanId])
+  @@index([userId])
+  @@index([role])
+  @@index([verified])
+  @@index([status])
+}
+
+model ClanEvent {
+  id           String    @id @default(uuid())
+  displayId    String    @unique @default("")
+  clanId       String
+  type         String
+  title        String
+  description  String?
+  startDate    DateTime
+  endDate      DateTime?
+  location     String?
+  isVirtual    Boolean   @default(false)
+  meetingUrl   String?
+  organizerId  String
+  maxAttendees Int?
+  status       String    @default("UPCOMING")
+  metadata     Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  clan         Clan      @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  organizer    User      @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+
+  @@index([clanId])
+  @@index([type])
+  @@index([startDate])
+  @@index([status])
+  @@index([organizerId])
+}
+
+model ClanDocument {
+  id            String    @id @default(uuid())
+  displayId     String    @unique @default("")
+  clanId        String
+  type          String
+  title         String
+  description   String?
+  fileUrl       String?
+  authorId      String
+  publishedDate DateTime?
+  verified      Boolean   @default(false)
+  status        String    @default("ACTIVE")
+  metadata      Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  author        User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  clan          Clan      @relation(fields: [clanId], references: [id], onDelete: Cascade)
+
+  @@index([clanId])
+  @@index([type])
+  @@index([authorId])
+  @@index([verified])
+  @@index([status])
+}
+
+model ClanLocation {
+  id         String   @id @default(uuid())
+  clanId     String
+  type       String
+  country    String
+  city       String?
+  latitude   Float?
+  longitude  Float?
+  population Int?
+  year       Int?
+  createdAt  DateTime @default(now())
+  clan       Clan     @relation(fields: [clanId], references: [id], onDelete: Cascade)
+
+  @@index([clanId])
+  @@index([type])
+  @@index([country])
+  @@index([clanId, type])
+}
+
+model ClanFollower {
+  id         String   @id @default(uuid())
+  clanId     String
+  userId     String
+  followedAt DateTime @default(now())
+  clan       Clan     @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([clanId, userId])
+  @@index([clanId])
+  @@index([userId])
+}
+
+model ClanReputation {
+  id                String    @id @default(uuid())
+  clanId            String    @unique
+  heritageScore     Float     @default(0)
+  oldestClanBadge   Boolean   @default(false)
+  isLargest         Boolean   @default(false)
+  isActive          Boolean   @default(true)
+  isFastestGrowing  Boolean   @default(false)
+  preservationScore Float     @default(0)
+  totalFamilies     Int       @default(0)
+  totalMembers      Int       @default(0)
+  totalSubClans     Int       @default(0)
+  lastCalculatedAt  DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  clan              Clan      @relation(fields: [clanId], references: [id], onDelete: Cascade)
+
+  @@index([clanId])
+  @@index([heritageScore])
+  @@index([preservationScore])
+}
+
+model Bookmark {
+  id         String   @id @default(uuid())
+  userId     String
+  entityType String
+  entityId   String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, entityType, entityId])
+  @@index([userId])
+  @@index([entityType, entityId])
+}
+
+model KnowledgeBase {
+  id          String    @id @default(uuid())
+  entityType  String
+  entityId    String
+  type        String
+  title       String
+  content     String
+  authorId    String
+  status      String    @default("PUBLISHED")
+  publishedAt DateTime?
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([entityType, entityId])
+  @@index([type])
+  @@index([authorId])
+  @@index([status])
+}
+
+model CommunityAISummary {
+  id          String    @id @default(uuid())
+  communityId String
+  type        String
+  content     String
+  generatedAt DateTime  @default(now())
+  version     Int       @default(1)
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@index([communityId])
+  @@index([type])
+}
+
+model ClanAISummary {
+  id          String   @id @default(uuid())
+  clanId      String
+  type        String
+  content     String
+  generatedAt DateTime @default(now())
+  version     Int      @default(1)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  clan        Clan     @relation(fields: [clanId], references: [id], onDelete: Cascade)
+
+  @@index([clanId])
+  @@index([type])
+}
+
+model DocumentVault {
+  id                 String                   @id @default(uuid())
+  displayId          String                   @unique @default("")
+  title              String
+  description        String?
+  documentType       String                   @default("OTHER")
+  ownerId            String
+  ownerType          String                   @default("USER")
+  uploaderId         String
+  originalFileName   String?
+  storageProvider    String                   @default("cloudinary")
+  storageUrl         String?
+  mimeType           String?
+  extension          String?
+  fileSize           Int?
+  pages              Int?
+  language           String?
+  country            String?
+  city               String?
+  historicalDate     DateTime?
+  documentDate       DateTime?
+  visibility         String                   @default("ONLY_ME")
+  verificationStatus String                   @default("UNVERIFIED")
+  tags               String?
+  keywords           String?
+  references         String?
+  source             String?
+  ocrStatus          String                   @default("NOT_REQUESTED")
+  aiReadyFlag        Boolean                  @default(false)
+  isHidden           Boolean                  @default(false)
+  isFavorite         Boolean                  @default(false)
+  folderId           String?
+  familyId           String?
+  subClanId          String?
+  clanId             String?
+  communityId        String?
+  currentVersion     Int                      @default(1)
+  deletedAt          DateTime?
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+  accessLogs         DocumentAccessLog[]
+  attachments        DocumentAttachment[]
+  collectionItems    DocumentCollectionItem[]
+  publicPage         DocumentPublicPage?
+  docReferences      DocumentReference[]
+  shares             DocumentShare[]
+  tagsEntries        DocumentTag[]
+  folder             DocumentFolder?          @relation(fields: [folderId], references: [id])
+  owner              User                     @relation("VaultOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  uploader           User                     @relation("VaultUploader", fields: [uploaderId], references: [id], onDelete: Cascade)
+  verifications      DocumentVerification[]
+  versions           DocumentVersion[]
+
+  @@index([ownerId])
+  @@index([uploaderId])
+  @@index([documentType])
+  @@index([visibility])
+  @@index([verificationStatus])
+  @@index([ocrStatus])
+  @@index([isFavorite])
+  @@index([folderId])
+  @@index([familyId])
+  @@index([clanId])
+  @@index([communityId])
+  @@index([subClanId])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@index([ownerId, isHidden])
+}
+
+model DocumentVersion {
+  id               String        @id @default(uuid())
+  documentId       String
+  versionNumber    Int
+  title            String?
+  description      String?
+  storageUrl       String?
+  originalFileName String?
+  mimeType         String?
+  fileSize         Int?
+  changeNotes      String?
+  uploadedById     String
+  createdAt        DateTime      @default(now())
+  document         DocumentVault @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  uploadedBy       User          @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, versionNumber])
+  @@index([documentId])
+  @@index([uploadedById])
+}
+
+model DocumentFolder {
+  id          String           @id @default(uuid())
+  displayId   String           @unique @default("")
+  name        String
+  description String?
+  ownerId     String
+  parentId    String?
+  familyId    String?
+  clanId      String?
+  communityId String?
+  subClanId   String?
+  color       String?
+  icon        String?
+  isSystem    Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  owner       User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  parent      DocumentFolder?  @relation("FolderChildren", fields: [parentId], references: [id])
+  children    DocumentFolder[] @relation("FolderChildren")
+  documents   DocumentVault[]
+
+  @@index([ownerId])
+  @@index([parentId])
+  @@index([familyId])
+  @@index([clanId])
+  @@index([communityId])
+  @@index([subClanId])
+}
+
+model DocumentShare {
+  id                String        @id @default(uuid())
+  documentId        String
+  sharedById        String
+  sharedWithId      String?
+  shareType         String        @default("USER")
+  permission        String        @default("VIEW")
+  secureToken       String?       @unique
+  expiresAt         DateTime?
+  passwordHash      String?
+  isDownloadAllowed Boolean       @default(false)
+  downloadCount     Int           @default(0)
+  maxDownloads      Int?
+  accessCount       Int           @default(0)
+  lastAccessedAt    DateTime?
+  isRevoked         Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+  document          DocumentVault @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  sharedBy          User          @relation("ShareBy", fields: [sharedById], references: [id], onDelete: Cascade)
+  sharedWith        User?         @relation("ShareWith", fields: [sharedWithId], references: [id])
+
+  @@index([documentId])
+  @@index([sharedById])
+  @@index([sharedWithId])
+  @@index([secureToken])
+  @@index([shareType])
+}
+
+model DocumentAccessLog {
+  id         String        @id @default(uuid())
+  documentId String
+  userId     String?
+  action     String
+  ipAddress  String?
+  userAgent  String?
+  shareId    String?
+  metadata   Json?
+  createdAt  DateTime      @default(now())
+  document   DocumentVault @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user       User?         @relation("DocAccessUser", fields: [userId], references: [id])
+
+  @@index([documentId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([documentId, action])
+}
+
+model DocumentTag {
+  id         String        @id @default(uuid())
+  documentId String
+  tag        String
+  createdAt  DateTime      @default(now())
+  document   DocumentVault @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, tag])
+  @@index([documentId])
+  @@index([tag])
+}
+
+model DocumentCollection {
+  id             String                   @id @default(uuid())
+  displayId      String                   @unique @default("")
+  name           String
+  description    String?
+  collectionType String                   @default("MANUAL")
+  ownerId        String
+  visibility     String                   @default("ONLY_ME")
+  coverImage     String?
+  isFeatured     Boolean                  @default(false)
+  sortOrder      Int                      @default(0)
+  familyId       String?
+  clanId         String?
+  communityId    String?
+  subClanId      String?
+  itemCount      Int                      @default(0)
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  owner          User                     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  items          DocumentCollectionItem[]
+  knowledgeBase  DocumentKnowledgeBase[]
+
+  @@index([ownerId])
+  @@index([collectionType])
+  @@index([visibility])
+  @@index([isFeatured])
+  @@index([familyId])
+  @@index([clanId])
+  @@index([communityId])
+}
+
+model DocumentCollectionItem {
+  id           String             @id @default(uuid())
+  collectionId String
+  documentId   String
+  sortOrder    Int                @default(0)
+  note         String?
+  addedById    String
+  createdAt    DateTime           @default(now())
+  addedBy      User               @relation(fields: [addedById], references: [id], onDelete: Cascade)
+  collection   DocumentCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  document     DocumentVault      @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, documentId])
+  @@index([collectionId])
+  @@index([documentId])
+  @@index([addedById])
+}
+
+model DocumentAttachment {
+  id             String        @id @default(uuid())
+  documentId     String
+  entityType     String
+  entityId       String
+  attachmentType String        @default("PRIMARY")
+  description    String?
+  isPrimary      Boolean       @default(false)
+  createdBy      String
+  createdAt      DateTime      @default(now())
+  creator        User          @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  document       DocumentVault @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, entityType, entityId])
+  @@index([documentId])
+  @@index([entityType, entityId])
+  @@index([createdBy])
+}
+
+model DocumentVerification {
+  id               String        @id @default(uuid())
+  documentId       String
+  verifierId       String
+  verificationType String        @default("COMMUNITY")
+  status           String        @default("PENDING")
+  confidence       Int?
+  notes            String?
+  evidence         String?
+  verifiedAt       DateTime?
+  expiresAt        DateTime?
+  isOfficial       Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  document         DocumentVault @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  verifier         User          @relation(fields: [verifierId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([verifierId])
+  @@index([verificationType])
+  @@index([status])
+  @@index([isOfficial])
+}
+
+model DocumentGallery {
+  id             String                  @id @default(uuid())
+  displayId      String                  @unique @default("")
+  title          String
+  description    String?
+  galleryType    String                  @default("PHOTO")
+  ownerId        String
+  albumName      String?
+  coverImage     String?
+  visibility     String                  @default("ONLY_ME")
+  itemCount      Int                     @default(0)
+  totalViews     Int                     @default(0)
+  familyId       String?
+  clanId         String?
+  communityId    String?
+  subClanId      String?
+  historicalDate DateTime?
+  location       String?
+  photographer   String?
+  tags           String?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  owner          User                    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  knowledgeBase  DocumentKnowledgeBase[]
+  references     DocumentReference[]
+
+  @@index([ownerId])
+  @@index([galleryType])
+  @@index([visibility])
+  @@index([albumName])
+  @@index([familyId])
+  @@index([clanId])
+  @@index([communityId])
+}
+
+model DocumentReference {
+  id            String           @id @default(uuid())
+  documentId    String?
+  galleryId     String?
+  referenceType String           @default("SOURCE_CITATION")
+  title         String
+  author        String?
+  publishDate   DateTime?
+  publisher     String?
+  url           String?
+  isbn          String?
+  doi           String?
+  journalName   String?
+  volume        String?
+  issue         String?
+  pages         String?
+  accessDate    DateTime?
+  reliability   String           @default("UNCHECKED")
+  notes         String?
+  createdBy     String
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  creator       User             @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  document      DocumentVault?   @relation(fields: [documentId], references: [id])
+  gallery       DocumentGallery? @relation(fields: [galleryId], references: [id])
+
+  @@index([documentId])
+  @@index([galleryId])
+  @@index([referenceType])
+  @@index([reliability])
+  @@index([createdBy])
+}
+
+model DocumentPublicPage {
+  id              String        @id @default(uuid())
+  documentId      String        @unique
+  slug            String        @unique
+  title           String
+  metaTitle       String?
+  metaDescription String?
+  ogImage         String?
+  customCss       String?
+  isPublished     Boolean       @default(false)
+  viewCount       Int           @default(0)
+  shareCount      Int           @default(0)
+  downloadCount   Int           @default(0)
+  allowDownload   Boolean       @default(false)
+  allowComments   Boolean       @default(true)
+  template        String        @default("DEFAULT")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  document        DocumentVault @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([slug])
+  @@index([documentId])
+  @@index([isPublished])
+}
+
+model DocumentKnowledgeBase {
+  id              String              @id @default(uuid())
+  displayId       String              @unique @default("")
+  title           String
+  content         String?
+  articleType     String              @default("WIKI")
+  ownerId         String
+  collectionId    String?
+  galleryId       String?
+  status          String              @default("DRAFT")
+  visibility      String              @default("ONLY_ME")
+  tags            String?
+  viewCount       Int                 @default(0)
+  helpfulCount    Int                 @default(0)
+  notHelpfulCount Int                 @default(0)
+  familyId        String?
+  clanId          String?
+  communityId     String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  collection      DocumentCollection? @relation(fields: [collectionId], references: [id])
+  gallery         DocumentGallery?    @relation(fields: [galleryId], references: [id])
+  owner           User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@index([articleType])
+  @@index([status])
+  @@index([visibility])
+  @@index([collectionId])
+  @@index([galleryId])
+  @@index([familyId])
+  @@index([clanId])
+  @@index([communityId])
+}
+
+model TreeView {
+  id             String   @id @default(uuid())
+  displayId      String   @unique @default("")
+  name           String
+  description    String?
+  treeType       String   @default("FAMILY")
+  rootEntityType String   @default("FAMILY")
+  rootEntityId   String
+  layout         String   @default("VERTICAL")
+  filters        Json?
+  viewport       Json?
+  ownerId        String
+  isPublic       Boolean  @default(false)
+  viewCount      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  owner          User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@index([treeType])
+  @@index([rootEntityType, rootEntityId])
+  @@index([isPublic])
+}
+
+model TreeLayoutCache {
+  id            String   @id @default(uuid())
+  entityType    String
+  entityId      String
+  treeType      String
+  nodePositions Json
+  layout        String
+  version       Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([entityType, entityId, treeType, layout])
+  @@index([entityType, entityId])
+}
+
+model TreeBranch {
+  id               String   @id @default(uuid())
+  displayId        String   @unique @default("")
+  entityType       String
+  entityId         String
+  parentEntityType String?
+  parentEntityId   String?
+  branchName       String?
+  depth            Int      @default(0)
+  nodeCount        Int      @default(0)
+  isExpanded       Boolean  @default(false)
+  metadata         Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([entityType, entityId])
+  @@index([parentEntityType, parentEntityId])
+  @@index([depth])
+}
+
+model TreeBookmark {
+  id            String   @id @default(uuid())
+  displayId     String   @unique @default("")
+  entityType    String
+  entityId      String
+  entityName    String?
+  entityTypeRef String?
+  color         String?
+  note          String?
+  userId        String
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, entityType, entityId])
+  @@index([userId])
+  @@index([entityType, entityId])
+}
+
+model TreeSearchHistory {
+  id          String   @id @default(uuid())
+  displayId   String   @unique @default("")
+  query       String
+  entityType  String?
+  entityId    String?
+  resultCount Int      @default(0)
+  userId      String
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([userId, createdAt])
+}
+
+model TreeViewHistory {
+  id         String   @id @default(uuid())
+  displayId  String   @unique @default("")
+  entityType String
+  entityId   String
+  entityName String?
+  treeType   String?
+  layout     String?
+  userId     String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, entityType, entityId])
+  @@index([userId])
+  @@index([userId, createdAt])
+}
+
+model EventComment {
+  id        String         @id @default(uuid())
+  displayId String         @unique @default("")
+  eventId   String
+  userId    String
+  parentId  String?
+  content   String
+  edited    Boolean        @default(false)
+  deletedAt DateTime?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  event     TimelineEvent  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  parent    EventComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   EventComment[] @relation("CommentReplies")
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model BirthInformation {
+  id                 String        @id @default(uuid())
+  eventId            String        @unique
+  birthWeight        Float?
+  birthWeightUnit    String        @default("kg")
+  birthLength        Float?
+  birthLengthUnit    String        @default("cm")
+  birthTime          String?
+  birthPlace         String?
+  hospitalName       String?
+  doctorName         String?
+  deliveryType       String?
+  bloodGroup         String?
+  apgarScore         Int?
+  complications      String?
+  vaccinationStarted Boolean       @default(false)
+  vaccinationDetails Json?
+  fatherName         String?
+  fatherAge          Int?
+  fatherOccupation   String?
+  motherName         String?
+  motherAge          Int?
+  motherBloodGroup   String?
+  motherOccupation   String?
+  birthOrder         Int?
+  totalSiblings      Int?
+  isTwins            Boolean       @default(false)
+  twinCount          Int?
+  midwifeName        String?
+  midwifeContact     String?
+  certificateNumber  String?
+  metadata           Json?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  event              TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+model MarriageInformation {
+  id                  String        @id @default(uuid())
+  eventId             String        @unique
+  spouseName          String?
+  spouseMemberId      String?
+  marriageType        String?
+  ceremonyType        String?
+  religion            String?
+  nikahDate           DateTime?
+  walimaDate          DateTime?
+  mehndiDate          DateTime?
+  nikahLocation       String?
+  walimaLocation      String?
+  venueName           String?
+  officiantName       String?
+  officiantTitle      String?
+  witnesses           Json?
+  totalGuests         Int?
+  bridalParty         Json?
+  giftsExchanged      Json?
+  dowryDetails        Json?
+  mahrAmount          Float?
+  mahrCurrency        String?
+  previousMarriage    Boolean       @default(false)
+  divorcePapers       Boolean       @default(false)
+  marriageCertificate String?
+  receptionDetails    Json?
+  specialRequests     String?
+  dressCode           String?
+  metadata            Json?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  event               TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([spouseMemberId])
+}
+
+model DeathInformation {
+  id                     String        @id @default(uuid())
+  eventId                String        @unique
+  deathTime              String?
+  deathPlace             String?
+  hospitalName           String?
+  doctorName             String?
+  causeOfDeath           String?
+  deathType              String?
+  ageAtDeath             Int?
+  ageAtDeathUnit         String        @default("years")
+  burialDate             DateTime?
+  burialLocation         String?
+  funeralHome            String?
+  funeralDirector        String?
+  janazahPrayer          Boolean       @default(false)
+  janazahLocation        String?
+  janazahTime            String?
+  burialPermitNumber     String?
+  deathCertificateNumber String?
+  coronerReport          Boolean       @default(false)
+  organDonation          Boolean       @default(false)
+  autopsy                Boolean       @default(false)
+  nextOfKin              String?
+  nextOfKinContact       String?
+  estateExecutor         String?
+  obituary               String?
+  memorialService        Boolean       @default(false)
+  memorialDetails        String?
+  metadata               Json?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  event                  TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+model EducationInformation {
+  id                    String        @id @default(uuid())
+  eventId               String        @unique
+  institutionName       String?
+  institutionType       String?
+  institutionLocation   String?
+  degree                String?
+  fieldOfStudy          String?
+  major                 String?
+  minor                 String?
+  startDate             DateTime?
+  endDate               DateTime?
+  graduationDate        DateTime?
+  gpa                   Float?
+  gpaScale              Float?        @default(4.0)
+  honors                String?
+  thesis                String?
+  wasScholarship        Boolean       @default(false)
+  scholarshipDetails    String?
+  tuitionCost           Float?
+  activities            Json?
+  achievements          Json?
+  clubs                 Json?
+  transferFrom          String?
+  previousInstitution   String?
+  enrollmentStatus      String?
+  verificationStatus    String?
+  certificateNumber     String?
+  supervisorName        String?
+  recommendationLetters Json?
+  metadata              Json?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  event                 TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+model EmploymentInformation {
+  id               String        @id @default(uuid())
+  eventId          String        @unique
+  companyName      String?
+  companyType      String?
+  companySize      String?
+  industry         String?
+  department       String?
+  position         String?
+  jobTitle         String?
+  role             String?
+  employmentType   String?
+  workLocation     String?
+  isRemote         Boolean       @default(false)
+  startDate        DateTime?
+  endDate          DateTime?
+  isCurrent        Boolean       @default(false)
+  salary           Float?
+  salaryCurrency   String?
+  salaryPeriod     String?       @default("yearly")
+  benefits         Json?
+  supervisorName   String?
+  supervisorTitle  String?
+  responsibilities Json?
+  achievements     Json?
+  skills           Json?
+  reasonForLeaving String?
+  isPromotion      Boolean       @default(false)
+  previousPosition String?
+  offerLetterUrl   String?
+  contractUrl      String?
+  referenceContact String?
+  referenceName    String?
+  metadata         Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  event            TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+model MigrationInformation {
+  id                  String        @id @default(uuid())
+  eventId             String        @unique
+  originCountry       String?
+  originCity          String?
+  originAddress       String?
+  destinationCountry  String?
+  destinationCity     String?
+  destinationAddress  String?
+  migrationType       String?
+  visaType            String?
+  visaNumber          String?
+  passportNumber      String?
+  travelDate          DateTime?
+  arrivalDate         DateTime?
+  travelMethod        String?
+  travelRoute         String?
+  sponsorName         String?
+  sponsorRelation     String?
+  sponsorContact      String?
+  reasonForMigration  String?
+  financialSituation  String?
+  documentsRequired   Json?
+  documentsSubmitted  Json?
+  immigrationLawyer   String?
+  caseNumber          String?
+  approvalStatus      String?
+  familyAccompanying  Json?
+  petsAccompanying    Boolean       @default(false)
+  culturalPreparation Boolean       @default(false)
+  languageBarrier     Boolean       @default(false)
+  newHomeDetails      Json?
+  communitySupport    String?
+  metadata            Json?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  event               TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+model MilitaryInformation {
+  id                  String        @id @default(uuid())
+  eventId             String        @unique
+  branch              String?
+  rank                String?
+  rankAtDischarge     String?
+  serviceNumber       String?
+  enlistmentDate      DateTime?
+  dischargeDate       DateTime?
+  serviceLength       Int?
+  serviceLengthUnit   String?       @default("years")
+  unit                String?
+  base                String?
+  theater             String?
+  specialty           String?
+  MOSCode             String?
+  conflicts           Json?
+  deployments         Json?
+  awards              Json?
+  medals              Json?
+  commendations       Json?
+  injuries            Json?
+  disabilityRating    Float?
+  dischargeType       String?
+  dischargeReason     String?
+  isVeteran           Boolean       @default(false)
+  isReserve           Boolean       @default(false)
+  isNationalGuard     Boolean       @default(false)
+  veteranBenefits     Boolean       @default(false)
+  veteranOrganization String?
+  serviceRecord       Json?
+  trainingCompleted   Json?
+  metadata            Json?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  event               TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+model AwardInformation {
+  id                  String        @id @default(uuid())
+  eventId             String        @unique
+  awardName           String?
+  awardType           String?
+  category            String?
+  level               String?
+  presentedBy         String?
+  organization        String?
+  ceremonyDate        DateTime?
+  ceremonyLocation    String?
+  description         String?
+  criteria            String?
+  significance        String?
+  nominationDate      DateTime?
+  nominatedBy         String?
+  nominationReason    String?
+  prizeAmount         Float?
+  prizeCurrency       String?
+  trophyGiven         Boolean       @default(false)
+  certificateGiven    Boolean       @default(false)
+  mediaCoverage       Boolean       @default(false)
+  mediaLinks          Json?
+  previousNominations Int?
+  totalNominees       Int?
+  isLifetime          Boolean       @default(false)
+  isPosthumous        Boolean       @default(false)
+  acceptanceSpeech    String?
+  thankYouNotes       String?
+  metadata            Json?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  event               TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+model BusinessInformation {
+  id                 String        @id @default(uuid())
+  eventId            String        @unique
+  businessName       String?
+  businessType       String?
+  industry           String?
+  legalStructure     String?
+  registrationDate   DateTime?
+  registrationNumber String?
+  taxId              String?
+  address            String?
+  city               String?
+  country            String?
+  website            String?
+  initialInvestment  Float?
+  investmentCurrency String?
+  fundingSource      String?
+  coFounders         Json?
+  partners           Json?
+  employees          Int?
+  productService     String?
+  targetMarket       String?
+  annualRevenue      Float?
+  revenueCurrency    String?
+  profitMargin       Float?
+  isOpen             Boolean       @default(true)
+  closeDate          DateTime?
+  closeReason        String?
+  acquisitionDetails Json?
+  mergerDetails      Json?
+  milestones         Json?
+  achievements       Json?
+  licenses           Json?
+  certifications     Json?
+  permits            Json?
+  metadata           Json?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  event              TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+model EventSummary {
+  id             String        @id @default(uuid())
+  eventId        String        @unique
+  generatedText  String
+  summaryType    String        @default("AUTO")
+  language       String        @default("en")
+  version        Int           @default(1)
+  keyFacts       Json?
+  timeline       Json?
+  isEdited       Boolean       @default(false)
+  editedText     String?
+  editedById     String?
+  narrativeStyle String?
+  tone           String?
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  event          TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+model EventPrintVersion {
+  id               String        @id @default(uuid())
+  eventId          String        @unique
+  versionType      String        @default("STANDARD")
+  htmlContent      String?
+  pdfUrl           String?
+  includeMap       Boolean       @default(true)
+  includeTimeline  Boolean       @default(true)
+  includePhotos    Boolean       @default(true)
+  includeDocuments Boolean       @default(false)
+  includeGuests    Boolean       @default(false)
+  colorScheme      String?       @default("default")
+  fontFamily       String?       @default("serif")
+  layout           String?       @default("portrait")
+  generatedById    String?
+  metadata         Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  userId           String?
+  event            TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  User             User?         @relation(fields: [userId], references: [id])
+
+  @@index([eventId])
+}
+
+model EventAttendance {
+  id           String        @id @default(uuid())
+  eventId      String
+  userId       String
+  method       String        @default("MANUAL")
+  checkedInAt  DateTime?
+  checkedOutAt DateTime?
+  location     Json?
+  verified     Boolean       @default(false)
+  verifiedById String?
+  verifiedAt   DateTime?
+  qrCode       String?
+  qrScannedAt  DateTime?
+  notes        String?
+  metadata     Json?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  event        TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+  @@index([method])
+}
+
+model EventVersion {
+  id                String        @id @default(uuid())
+  displayId         String        @unique @default("")
+  eventId           String
+  userId            String
+  versionNumber     Int
+  changeType        String        @default("UPDATE")
+  changeDescription String?
+  snapshot          Json
+  isRollback        Boolean       @default(false)
+  rolledBackFromId  String?
+  createdAt         DateTime      @default(now())
+  event             TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user              User          @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([eventId])
+  @@index([userId])
+  @@index([eventId, versionNumber])
+}
+
+model EventCustomTemplate {
+  id          String   @id @default(uuid())
+  displayId   String   @unique @default("")
+  userId      String
+  name        String
+  eventType   String
+  description String?
+  config      Json
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([eventType])
+}
+
+model EventReaction {
+  id        String        @id @default(uuid())
+  eventId   String
+  userId    String
+  emoji     String
+  createdAt DateTime      @default(now())
+  event     TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId, emoji])
+  @@index([eventId])
+  @@index([userId])
+}
+
+model EventSearchTag {
+  id        String        @id @default(uuid())
+  eventId   String
+  tag       String
+  category  String        @default("general")
+  createdAt DateTime      @default(now())
+  event     TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, tag])
+  @@index([eventId])
+  @@index([tag])
+  @@index([category])
+}
+
+model EventHistory {
+  id        String        @id @default(uuid())
+  displayId String        @unique @default("")
+  eventId   String
+  userId    String
+  action    String
+  field     String?
+  oldValue  String?
+  newValue  String?
+  metadata  Json?
+  createdAt DateTime      @default(now())
+  event     TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model EventDocument {
+  id                 String        @id @default(uuid())
+  displayId          String        @unique @default("")
+  eventId            String
+  uploadedById       String?
+  ownerId            String?
+  fileName           String
+  fileType           String
+  fileSize           Int?
+  fileUrl            String
+  title              String?
+  description        String?
+  verificationStatus String        @default("UNVERIFIED")
+  issueDate          DateTime?
+  expiryDate         DateTime?
+  privacy            String        @default("FAMILY")
+  version            Int           @default(1)
+  isPublic           Boolean       @default(false)
+  tags               String[]
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  category           String        @default("GENERAL")
+  downloadCount      Int           @default(0)
+  isPrivate          Boolean       @default(false)
+  metadata           Json?
+  ocrStatus          String        @default("NOT_APPLICABLE")
+  ocrText            String?
+  originalUrl        String?
+  thumbnailUrl       String?
+  verificationNotes  String?
+  verifiedAt         DateTime?
+  verifiedById       String?
+  virusScanStatus    String        @default("PENDING")
+  event              TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  owner              User?         @relation("EventDocOwner", fields: [ownerId], references: [id])
+  uploadedBy         User?         @relation("EventDocUploader", fields: [uploadedById], references: [id])
+  verifiedBy         User?         @relation("EventDocVerifier", fields: [verifiedById], references: [id])
+
+  @@index([eventId])
+  @@index([uploadedById])
+  @@index([ownerId])
+  @@index([verificationStatus])
+  @@index([fileType])
+}
+
+model EventActivity {
+  id          String        @id @default(uuid())
+  displayId   String        @unique @default("")
+  eventId     String
+  userId      String?
+  action      String
+  description String?
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+  event       TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user        User?         @relation(fields: [userId], references: [id])
+
+  @@index([eventId])
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model ProfileLink {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  memberId  String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([memberId])
+}
