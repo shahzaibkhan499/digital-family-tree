@@ -17,7 +17,6 @@ const nextConfig: NextConfig = {
       {
         source: '/api/nest/:path*',
         destination: `${API_URL}/api/:path*`,
-        has: [{ type: 'header', key: 'accept', value: 'application/json' }],
       },
     ];
   },
@@ -52,7 +51,10 @@ const nextConfig: NextConfig = {
           { key: 'X-Request-Timeout', value: '30000' },
           { key: 'Access-Control-Allow-Origin', value: API_URL },
           { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,PATCH,DELETE,OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization, X-Refresh-Token' },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization, X-Refresh-Token',
+          },
           { key: 'Access-Control-Allow-Credentials', value: 'true' },
         ],
       },
