@@ -1,14 +1,20 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { FamilyMember, Relationship, Family, Clan, SubClan, Community, ProfileLink } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { IdentityService } from '../common/identity.service';
 import {
   CreateTreeViewDto, UpdateTreeViewDto, SaveLayoutCacheDto, ExpandNodeDto,
   CreateBookmarkDto, CreateSearchHistoryDto,
 } from './dto/create-tree-view.dto';
-import { TreeNode, TreeEdge, TreeData, TreeStats } from './tree.types';
+import {
+  TreeNode, TreeEdge, TreeData, TreeStats,
+  MemberSummary, SubClanNodeData, FamilyNodeData, FamilyWithMemberCount,
+  CommonAncestorResult, RelationshipPathResult,
+} from './tree.types';
 import { GenealogyCalculatorService } from './genealogy-calculator.service';
 
-const PARENT_FIGURE_TYPES = new Set([
+
+const PARENT_FIGURE_TYPES = new Set<string>([
   'FATHER', 'MOTHER', 'PARENT', 'GRANDFATHER', 'GRANDMOTHER', 'GRANDPARENT', 'GREAT_GRANDPARENT',
   'STEP_FATHER', 'STEP_MOTHER', 'STEP_PARENT',
   'ADOPTIVE_FATHER', 'ADOPTIVE_MOTHER', 'ADOPTIVE_PARENT',
@@ -19,7 +25,7 @@ const PARENT_FIGURE_TYPES = new Set([
   'GODFATHER', 'GODMOTHER',
 ]);
 
-const CHILD_FIGURE_TYPES = new Set([
+const CHILD_FIGURE_TYPES = new Set<string>([
   'SON', 'DAUGHTER', 'CHILD', 'GRANDSON', 'GRANDDAUGHTER', 'GRANDCHILD', 'GREAT_GRANDCHILD',
   'STEP_SON', 'STEP_DAUGHTER', 'STEP_CHILD',
   'ADOPTIVE_SON', 'ADOPTIVE_DAUGHTER', 'ADOPTIVE_CHILD',
@@ -30,27 +36,27 @@ const CHILD_FIGURE_TYPES = new Set([
   'NEPHEW', 'NIECE',
 ]);
 
-const PURE_PARENT_TYPES = new Set(
-  [...PARENT_FIGURE_TYPES].filter(t => !['FATHER_IN_LAW', 'MOTHER_IN_LAW', 'GODFATHER', 'GODMOTHER'].includes(t)),
+const PURE_PARENT_TYPES = new Set<string>(
+  [...PARENT_FIGURE_TYPES].filter((t: string) => !['FATHER_IN_LAW', 'MOTHER_IN_LAW', 'GODFATHER', 'GODMOTHER'].includes(t)),
 );
 
-const PURE_CHILD_TYPES = new Set(
-  [...CHILD_FIGURE_TYPES].filter(t => !['NEPHEW', 'NIECE', 'SON_IN_LAW', 'DAUGHTER_IN_LAW', 'GODSON', 'GODDAUGHTER'].includes(t)),
+const PURE_CHILD_TYPES = new Set<string>(
+  [...CHILD_FIGURE_TYPES].filter((t: string) => !['NEPHEW', 'NIECE', 'SON_IN_LAW', 'DAUGHTER_IN_LAW', 'GODSON', 'GODDAUGHTER'].includes(t)),
 );
 
-const SPOUSE_TYPES = new Set([
+const SPOUSE_TYPES = new Set<string>([
   'HUSBAND', 'WIFE', 'SPOUSE', 'EX_SPOUSE', 'PARTNER',
   'FIANCÉ', 'FIANCÉE', 'DIVORCED', 'DIVORCED_FROM',
   'WIDOW', 'WIDOWER', 'EX_HUSBAND', 'EX_WIFE',
 ]);
 
-const SIBLING_TYPES = new Set([
+const SIBLING_TYPES = new Set<string>([
   'BROTHER', 'SISTER', 'HALF_BROTHER', 'HALF_SISTER', 'HALF_SIBLING',
   'STEP_BROTHER', 'STEP_SISTER', 'STEP_SIBLING',
   'TWIN', 'TRIPLET', 'QUADRUPLET',
 ]);
 
-const PARENT_CHILD_TYPES = new Set([...PARENT_FIGURE_TYPES, ...CHILD_FIGURE_TYPES]);
+const PARENT_CHILD_TYPES = new Set<string>([...PARENT_FIGURE_TYPES, ...CHILD_FIGURE_TYPES]);
 
 @Injectable()
 export class TreeService {
@@ -73,12 +79,12 @@ export class TreeService {
 
     if (!family) throw new NotFoundException('Family not found');
 
-    const members = family.members;
-    const relationships = await this.prisma.relationship.findMany({
+    const members: FamilyMember[] = family.members;
+    const relationships: Relationship[] = await this.prisma.relationship.findMany({
       where: {
         OR: [
-          { fromMemberId: { in: members.map(m => m.id) } },
-          { toMemberId: { in: members.map(m => m.id) } },
+          { fromMemberId: { in: members.map((m: FamilyMember) => m.id) } },
+          { toMemberId: { in: members.map((m: FamilyMember) => m.id) } },
         ],
       },
     });
@@ -90,7 +96,7 @@ export class TreeService {
     const parentOf = new Map<string, string[]>();
     const spouseOf = new Map<string, string[]>();
 
-    members.forEach(m => {
+    members.forEach((m: FamilyMember) => {
       childOf.set(m.id, []);
       parentOf.set(m.id, []);
       spouseOf.set(m.id, []);
@@ -114,8 +120,8 @@ export class TreeService {
       }
     }
 
-    const roots = members.filter(m => {
-      const parents = (parentOf.get(m.id) || []).filter(p => !spouseOf.get(m.id)?.includes(p));
+    const roots = members.filter((m: FamilyMember) => {
+      const parents = (parentOf.get(m.id) || []).filter((p: string) => !spouseOf.get(m.id)?.includes(p));
       return parents.length === 0;
     });
 
@@ -124,7 +130,7 @@ export class TreeService {
 
     const bfs = (startIds: string[]) => {
       const queue = [...startIds];
-      startIds.forEach(id => depthMap.set(id, 0));
+      startIds.forEach((id: string) => depthMap.set(id, 0));
       let idx = 0;
       while (idx < queue.length && idx < 5000) {
         const id = queue[idx++];
@@ -133,21 +139,21 @@ export class TreeService {
         const currentDepth = depthMap.get(id) || 0;
         if (currentDepth >= depth) continue;
 
-        const children = (childOf.get(id) || []).filter(c => !visited.has(c));
+        const children = (childOf.get(id) || []).filter((c: string) => !visited.has(c));
         for (const c of children) {
           if (!depthMap.has(c) || depthMap.get(c)! > currentDepth + 1) {
             depthMap.set(c, currentDepth + 1);
             queue.push(c);
           }
         }
-        const spouses = (spouseOf.get(id) || []).filter(s => !visited.has(s));
+        const spouses = (spouseOf.get(id) || []).filter((s: string) => !visited.has(s));
         for (const s of spouses) {
           if (!depthMap.has(s)) {
             depthMap.set(s, currentDepth);
             queue.push(s);
           }
         }
-        const parents = (parentOf.get(id) || []).filter(p => !visited.has(p));
+        const parents = (parentOf.get(id) || []).filter((p: string) => !visited.has(p));
         for (const p of parents) {
           if (!depthMap.has(p) || depthMap.get(p)! > currentDepth - 1) {
             depthMap.set(p, currentDepth - 1);
@@ -158,7 +164,7 @@ export class TreeService {
     };
 
     if (roots.length > 0) {
-      bfs(roots.map(r => r.id));
+      bfs(roots.map((r: FamilyMember) => r.id));
     } else if (members.length > 0) {
       bfs([members[0].id]);
     }
@@ -175,7 +181,7 @@ export class TreeService {
       if (d > maxDepthVal) maxDepthVal = d;
     }
 
-    const profileLinkMap = await this.getProfileLinkMap(members.map(m => m.id));
+    const profileLinkMap = await this.getProfileLinkMap(members.map((m: FamilyMember) => m.id));
 
     const now = new Date();
     for (const m of members) {
@@ -236,7 +242,7 @@ export class TreeService {
           label: t,
         });
       } else if (isSpouse) {
-        const idx = edges.findIndex(e =>
+        const idx = edges.findIndex((e: TreeEdge) =>
           e.type === 'SPOUSE' &&
           ((e.fromNodeId === r.fromMemberId && e.toNodeId === r.toMemberId) ||
            (e.fromNodeId === r.toMemberId && e.toNodeId === r.fromMemberId))
@@ -372,13 +378,13 @@ export class TreeService {
       privacyLevel: clan.privacy,
       hasChildren: (clan.subClans?.length || 0) + (clan.families?.length || 0) > 0,
       childIds: [
-        ...(clan.subClans || []).map(s => s.id),
-        ...(clan.families || []).map(f => f.id),
+        ...(clan.subClans || []).map((s: SubClan) => s.id),
+        ...(clan.families || []).map((f: Family) => f.id),
       ],
     };
     nodes.push(clanNode);
 
-    const buildSubClanNode = (sc: any, parentEntityId: string, d: number) => {
+    const buildSubClanNode = (sc: SubClanNodeData, parentEntityId: string, d: number) => {
       const node: TreeNode = {
         id: sc.id,
         displayId: sc.displayId,
@@ -395,8 +401,8 @@ export class TreeService {
         privacyLevel: sc.privacy,
         hasChildren: (sc.childSubClans?.length || 0) + (sc.families?.length || 0) > 0,
         childIds: [
-          ...(sc.childSubClans || []).map((c: any) => c.id),
-          ...(sc.families || []).map((f: any) => f.id),
+          ...(sc.childSubClans || []).map((c: SubClanNodeData) => c.id),
+          ...(sc.families || []).map((f: FamilyNodeData) => f.id),
         ],
       };
       nodes.push(node);
@@ -416,8 +422,8 @@ export class TreeService {
       }
     };
 
-    const buildFamilyNode = (fam: any, parentEntityId: string, d: number) => {
-      const familyMembers = fam.members || [];
+    const buildFamilyNode = (fam: FamilyNodeData, parentEntityId: string, d: number) => {
+      const familyMembers: FamilyMember[] = fam.members || [];
       const node: TreeNode = {
         id: fam.id,
         displayId: fam.displayId || '',
@@ -431,7 +437,7 @@ export class TreeService {
         familyId: fam.id,
         familyName: fam.name,
         hasChildren: familyMembers.length > 0,
-        childIds: familyMembers.map((m: any) => m.id),
+        childIds: familyMembers.map((m: FamilyMember) => m.id),
       };
       nodes.push(node);
       edges.push({
@@ -488,7 +494,7 @@ export class TreeService {
       buildFamilyNode(fam, clan.id, 1);
     }
 
-    const clanMemberIds = nodes.filter(n => n.entityType === 'MEMBER').map(n => n.entityId);
+    const clanMemberIds = nodes.filter((n: TreeNode) => n.entityType === 'MEMBER').map((n: TreeNode) => n.entityId);
     const clanProfileLinkMap = await this.getProfileLinkMap(clanMemberIds);
     for (const n of nodes) {
       if (n.entityType === 'MEMBER') n.userId = clanProfileLinkMap.get(n.entityId);
@@ -499,7 +505,7 @@ export class TreeService {
       edges,
       rootId: clan.id,
       totalNodes: nodes.length,
-      maxDepth: Math.max(...nodes.map(n => n.depth), 0),
+      maxDepth: Math.max(...nodes.map((n: TreeNode) => n.depth), 0),
       metadata: {
         treeType: 'CLAN',
         rootEntityType: 'CLAN',
@@ -557,7 +563,7 @@ export class TreeService {
       status: community.status,
       privacyLevel: community.privacy,
       hasChildren: (community.clans?.length || 0) > 0,
-      childIds: (community.clans || []).map(c => c.id),
+      childIds: (community.clans || []).map((c: Clan) => c.id),
     };
     nodes.push(communityNode);
 
@@ -640,7 +646,7 @@ export class TreeService {
       }
     }
 
-    const commMemberIds = nodes.filter(n => n.entityType === 'MEMBER').map(n => n.entityId);
+    const commMemberIds = nodes.filter((n: TreeNode) => n.entityType === 'MEMBER').map((n: TreeNode) => n.entityId);
     const commProfileLinkMap = await this.getProfileLinkMap(commMemberIds);
     for (const n of nodes) {
       if (n.entityType === 'MEMBER') n.userId = commProfileLinkMap.get(n.entityId);
@@ -651,7 +657,7 @@ export class TreeService {
       edges,
       rootId: community.id,
       totalNodes: nodes.length,
-      maxDepth: Math.max(...nodes.map(n => n.depth), 0),
+      maxDepth: Math.max(...nodes.map((n: TreeNode) => n.depth), 0),
       metadata: {
         treeType: 'COMMUNITY',
         rootEntityType: 'COMMUNITY',
@@ -737,7 +743,7 @@ export class TreeService {
 
     await buildAncestors(memberId, 0);
 
-    const ancMemberIds = nodes.filter(n => n.entityType === 'MEMBER').map(n => n.entityId);
+    const ancMemberIds = nodes.filter((n: TreeNode) => n.entityType === 'MEMBER').map((n: TreeNode) => n.entityId);
     const ancProfileLinkMap = await this.getProfileLinkMap(ancMemberIds);
     for (const n of nodes) {
       if (n.entityType === 'MEMBER') n.userId = ancProfileLinkMap.get(n.entityId);
@@ -748,7 +754,7 @@ export class TreeService {
       edges,
       rootId: memberId,
       totalNodes: nodes.length,
-      maxDepth: Math.max(...nodes.map(n => n.depth), 0),
+      maxDepth: Math.max(...nodes.map((n: TreeNode) => n.depth), 0),
       metadata: {
         treeType: 'ANCESTOR',
         rootEntityType: 'MEMBER',
@@ -830,7 +836,7 @@ export class TreeService {
 
     await buildDescendants(memberId, 0);
 
-    const descMemberIds = nodes.filter(n => n.entityType === 'MEMBER').map(n => n.entityId);
+    const descMemberIds = nodes.filter((n: TreeNode) => n.entityType === 'MEMBER').map((n: TreeNode) => n.entityId);
     const descProfileLinkMap = await this.getProfileLinkMap(descMemberIds);
     for (const n of nodes) {
       if (n.entityType === 'MEMBER') n.userId = descProfileLinkMap.get(n.entityId);
@@ -841,7 +847,7 @@ export class TreeService {
       edges,
       rootId: memberId,
       totalNodes: nodes.length,
-      maxDepth: Math.max(...nodes.map(n => n.depth), 0),
+      maxDepth: Math.max(...nodes.map((n: TreeNode) => n.depth), 0),
       metadata: {
         treeType: 'DESCENDANT',
         rootEntityType: 'MEMBER',
@@ -932,8 +938,7 @@ export class TreeService {
         throw new BadRequestException(`Invalid entity type: ${entityType}`);
     }
 
-    const memberNodes = treeData.nodes.filter(n => n.entityType === 'MEMBER');
-    const now = new Date();
+    const memberNodes = treeData.nodes.filter((n: TreeNode) => n.entityType === 'MEMBER');
 
     let livingCount = 0;
     let deceasedCount = 0;
@@ -953,7 +958,7 @@ export class TreeService {
       if (n.verificationBadge) verifiedCount++;
     }
 
-    const generationSet = new Set(memberNodes.map(n => n.depth));
+    const generationSet = new Set(memberNodes.map((n: TreeNode) => n.depth));
 
     return {
       totalNodes: treeData.totalNodes,
@@ -1093,7 +1098,6 @@ export class TreeService {
   }
 
   async expandNode(dto: ExpandNodeDto): Promise<{ nodes: TreeNode[]; edges: TreeEdge[] }> {
-    const depth = dto.depth || 1;
     const nodes: TreeNode[] = [];
     const edges: TreeEdge[] = [];
 
@@ -1118,7 +1122,7 @@ export class TreeService {
         where: { id: { in: [...relatedIds] }, deletedAt: null },
       });
 
-      const expandProfileLinkMap = await this.getProfileLinkMap(relatedMembers.map(m => m.id));
+      const expandProfileLinkMap = await this.getProfileLinkMap(relatedMembers.map((m: FamilyMember) => m.id));
       const now = new Date();
       for (const m of relatedMembers) {
         let age: number | undefined;
@@ -1208,7 +1212,6 @@ export class TreeService {
   async getSeoMetadata(entityType: string, entityId: string) {
     let name = '';
     let description = '';
-    let memberCount = 0;
     let image = '';
 
     if (entityType === 'FAMILY') {
@@ -1216,7 +1219,6 @@ export class TreeService {
       if (family) {
         name = family.name;
         description = `Explore the ${family.name} family tree on the Global Digital Family Platform.`;
-        memberCount = await this.prisma.familyMember.count({ where: { familyId: entityId, deletedAt: null } });
       }
     } else if (entityType === 'CLAN') {
       const clan = await this.prisma.clan.findUnique({ where: { id: entityId } });
@@ -1275,15 +1277,14 @@ export class TreeService {
         throw new BadRequestException(`Invalid entity type: ${entityType}`);
     }
 
-    const memberNodes = treeData.nodes.filter(n => n.entityType === 'MEMBER');
-    const familyNodes = treeData.nodes.filter(n => n.entityType === 'FAMILY');
-    const now = new Date();
+    const memberNodes = treeData.nodes.filter((n: TreeNode) => n.entityType === 'MEMBER');
+    const familyNodes = treeData.nodes.filter((n: TreeNode) => n.entityType === 'FAMILY');
 
     let livingCount = 0;
     let deceasedCount = 0;
     const verifiedCount = 0;
-    let oldestMember: any = null;
-    let youngestMember: any = null;
+    let oldestMember: MemberSummary | null = null;
+    let youngestMember: MemberSummary | null = null;
     let oldestAge = -1;
     let youngestAge = Infinity;
     const genderBreakdown: Record<string, number> = {};
@@ -1319,10 +1320,10 @@ export class TreeService {
       }
     }
 
-    const generationSet = Object.keys(generationCounts).map(Number);
+    const generationSet = Object.keys(generationCounts).map((k: string) => Number(k));
     const totalGenerations = generationSet.length;
     const largestBranchSize = Math.max(...Object.values(familyDistribution), 0);
-    const largestBranchName = Object.entries(familyDistribution).find(([, v]) => v === largestBranchSize)?.[0] || '';
+    const largestBranchName = Object.entries(familyDistribution).find(([, v]: [string, number]) => v === largestBranchSize)?.[0] || '';
 
     return {
       totalNodes: treeData.totalNodes,
@@ -1350,8 +1351,8 @@ export class TreeService {
     if (!memberA) throw new NotFoundException('Member A not found');
     if (!memberB) throw new NotFoundException('Member B not found');
 
-    const getAncestors = async (memberId: string): Promise<Map<string, { depth: number; member: any }>> => {
-      const ancestors = new Map<string, { depth: number; member: any }>();
+    const getAncestors = async (memberId: string): Promise<Map<string, { depth: number; member: FamilyMember }>> => {
+      const ancestors = new Map<string, { depth: number; member: FamilyMember }>();
       const queue: { id: string; depth: number }[] = [{ id: memberId, depth: 0 }];
       const visited = new Set<string>();
 
@@ -1389,7 +1390,7 @@ export class TreeService {
     const ancestorsA = await getAncestors(memberIdA);
     const ancestorsB = await getAncestors(memberIdB);
 
-    let commonAncestor: any = null;
+    let commonAncestor: (FamilyMember & { depthFromA: number; depthFromB: number; totalDepth: number }) | null = null;
     let minTotalDepth = Infinity;
 
     for (const [id, a] of ancestorsA) {
@@ -1398,17 +1399,11 @@ export class TreeService {
         const totalDepth = a.depth + b.depth;
         if (totalDepth < minTotalDepth) {
           minTotalDepth = totalDepth;
-          commonAncestor = {
-            id: a.member.id,
-            displayId: a.member.displayId,
-            name: `${a.member.firstName} ${a.member.lastName || ''}`.trim(),
-            gender: a.member.gender,
-            birthDate: a.member.birthDate,
-            deathDate: a.member.deathDate,
+          commonAncestor = Object.assign(a.member, {
             depthFromA: a.depth,
             depthFromB: b.depth,
             totalDepth: totalDepth,
-          };
+          });
         }
       }
     }
@@ -1426,7 +1421,17 @@ export class TreeService {
 
     return {
       found: true,
-      commonAncestor,
+      commonAncestor: {
+        id: commonAncestor.id,
+        displayId: commonAncestor.displayId,
+        name: `${commonAncestor.firstName} ${commonAncestor.lastName || ''}`.trim(),
+        gender: commonAncestor.gender,
+        birthDate: commonAncestor.birthDate,
+        deathDate: commonAncestor.deathDate,
+        depthFromA: commonAncestor.depthFromA,
+        depthFromB: commonAncestor.depthFromB,
+        totalDepth: commonAncestor.totalDepth,
+      },
       generationDifference: Math.abs(
         (ancestorsA.get(memberIdA)?.depth || 0) - (ancestorsB.get(memberIdB)?.depth || 0)
       ),
@@ -1488,7 +1493,7 @@ export class TreeService {
       };
     }
 
-    const pathMembers = [];
+    const pathMembers: { id: string; displayId: string; name: string; gender: string | null; birthDate: Date | null; deathDate: Date | null }[] = [];
     for (const id of path) {
       const m = id === memberIdA ? memberA : await this.prisma.familyMember.findUnique({ where: { id } });
       if (m) {
@@ -1557,13 +1562,13 @@ export class TreeService {
         throw new BadRequestException(`Invalid entity type: ${entityType}`);
     }
 
-    const orphanNodes: any[] = [];
-    const brokenRelationships: any[] = [];
-    const duplicateEdges: any[] = [];
-    const memberNodes = treeData.nodes.filter(n => n.entityType === 'MEMBER');
-    const familyNodes = treeData.nodes.filter(n => n.entityType === 'FAMILY');
+    const orphanNodes: { id: string; displayId: string; name: string }[] = [];
+    const brokenRelationships: { edgeId: string; from: string; to: string; reason: string }[] = [];
+    const duplicateEdges: { edgeId: string; from: string; to: string; type: string }[] = [];
+    const memberNodes = treeData.nodes.filter((n: TreeNode) => n.entityType === 'MEMBER');
+    const familyNodes = treeData.nodes.filter((n: TreeNode) => n.entityType === 'FAMILY');
 
-    const nodeIds = new Set(treeData.nodes.map(n => n.id));
+    const nodeIds = new Set(treeData.nodes.map((n: TreeNode) => n.id));
     const edgeSeen = new Set<string>();
 
     for (const edge of treeData.edges) {
@@ -1583,7 +1588,7 @@ export class TreeService {
     }
 
     for (const n of memberNodes) {
-      const hasEdge = treeData.edges.some(e => e.fromNodeId === n.id || e.toNodeId === n.id);
+      const hasEdge = treeData.edges.some((e: TreeEdge) => e.fromNodeId === n.id || e.toNodeId === n.id);
       if (!hasEdge) {
         orphanNodes.push({ id: n.id, displayId: n.displayId, name: n.name });
       }
@@ -1613,8 +1618,8 @@ export class TreeService {
       summary: {
         families: familyNodes.length,
         members: memberNodes.length,
-        living: memberNodes.filter(n => !n.deathDate).length,
-        deceased: memberNodes.filter(n => n.deathDate).length,
+        living: memberNodes.filter((n: TreeNode) => !n.deathDate).length,
+        deceased: memberNodes.filter((n: TreeNode) => n.deathDate).length,
       },
     };
   }
@@ -1754,7 +1759,7 @@ export class TreeService {
   }
 
   async getPopularBranches(limit: number = 10) {
-    const families = await this.prisma.family.findMany({
+    const families: FamilyWithMemberCount[] = await this.prisma.family.findMany({
       where: { deletedAt: null },
       include: {
         _count: {
@@ -1766,9 +1771,9 @@ export class TreeService {
     });
 
     return families
-      .sort((a, b) => b._count.members - a._count.members)
+      .sort((a: FamilyWithMemberCount, b: FamilyWithMemberCount) => b._count.members - a._count.members)
       .slice(0, limit)
-      .map(f => ({
+      .map((f: FamilyWithMemberCount) => ({
         id: f.id,
         displayId: f.displayId,
         name: f.name,
@@ -1850,9 +1855,9 @@ export class TreeService {
 
   private async getProfileLinkMap(memberIds: string[]): Promise<Map<string, string>> {
     if (memberIds.length === 0) return new Map();
-    const links = await this.prisma.profileLink.findMany({
+    const links: ProfileLink[] = await this.prisma.profileLink.findMany({
       where: { memberId: { in: memberIds } },
     });
-    return new Map(links.map(pl => [pl.memberId, pl.userId]));
+    return new Map(links.map((pl: ProfileLink) => [pl.memberId, pl.userId]));
   }
 }
