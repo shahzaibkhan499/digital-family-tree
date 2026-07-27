@@ -5,7 +5,7 @@ services:
     region: oregon
     plan: free
     rootDir: apps/api
-    buildCommand: npm install -g pnpm@9.15.0 && pnpm install --frozen-lockfile && pnpm run build
+    buildCommand: npm install -g pnpm@9.15.0 && pnpm install --frozen-lockfile && pnpm --filter @digital-family-tree/api exec prisma generate && pnpm run build
     startCommand: node dist/main.js
     healthCheckPath: /api/health
     envVars:
