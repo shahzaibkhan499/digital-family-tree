@@ -17,6 +17,7 @@ COPY --from=deps /app/packages ./packages
 COPY apps/api ./apps/api
 COPY packages ./packages
 COPY turbo.json ./
+RUN pnpm --filter @digital-family-tree/api exec prisma generate
 RUN pnpm turbo run build --filter=@digital-family-tree/api
 
 FROM node:22-alpine AS runner
