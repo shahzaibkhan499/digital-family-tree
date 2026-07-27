@@ -1,4 +1,4 @@
-import { FamilyMember, Family, SubClan } from '@prisma/client';
+import { FamilyMember, Family, SubClan, Clan, Community, ProfileLink } from '@prisma/client';
 
 export interface TreeNode {
   id: string;
@@ -111,7 +111,14 @@ export interface CommonAncestorResult {
 
 export interface RelationshipPathResult {
   found: boolean;
-  path: { id: string; displayId: string; name: string; gender: string | null; birthDate: Date | null; deathDate: Date | null }[];
+  path: {
+    id: string;
+    displayId: string;
+    name: string;
+    gender: string | null;
+    birthDate: Date | null;
+    deathDate: Date | null;
+  }[];
   distance: number;
   relationship: string;
   relationshipType: string;
