@@ -4,15 +4,20 @@ export const familyQueries = {
   createFamily(family: Neo4jFamily): { query: string; params: Record<string, any> } {
     return {
       query: `
-        CREATE (f:Family {
-          id: $id,
-          displayId: $displayId,
-          name: $name,
-          description: $description,
-          ownerId: $ownerId,
-          createdAt: $createdAt,
-          updatedAt: $updatedAt
-        })
+        MERGE (f:Family {id: $id})
+        ON CREATE SET
+          f.displayId = $displayId,
+          f.name = $name,
+          f.description = $description,
+          f.ownerId = $ownerId,
+          f.createdAt = $createdAt,
+          f.updatedAt = $updatedAt
+        ON MATCH SET
+          f.displayId = $displayId,
+          f.name = $name,
+          f.description = $description,
+          f.ownerId = $ownerId,
+          f.updatedAt = $updatedAt
         RETURN f
       `,
       params: {
@@ -27,12 +32,19 @@ export const familyQueries = {
     };
   },
 
-  updateFamily(id: string, updates: Partial<Neo4jFamily>): { query: string; params: Record<string, any> } {
+  updateFamily(
+    id: string,
+    updates: Partial<Neo4jFamily>,
+  ): { query: string; params: Record<string, any> } {
     const setClauses: string[] = [];
     const params: Record<string, any> = { id };
 
     const fields: (keyof Neo4jFamily)[] = [
-      'displayId', 'name', 'description', 'ownerId', 'updatedAt',
+      'displayId',
+      'name',
+      'description',
+      'ownerId',
+      'updatedAt',
     ];
 
     for (const field of fields) {
@@ -76,19 +88,25 @@ export const familyQueries = {
     };
   },
 
-  linkPersonToFamily(personId: string, familyId: string): { query: string; params: Record<string, any> } {
+  linkPersonToFamily(
+    personId: string,
+    familyId: string,
+  ): { query: string; params: Record<string, any> } {
     return {
       query: `
         MATCH (p:Person {id: $personId})
         MATCH (f:Family {id: $familyId})
-        CREATE (p)-[:MEMBER_OF]->(f)
+        MERGE (p)-[:MEMBER_OF]->(f)
         RETURN p, f
       `,
       params: { personId, familyId },
     };
   },
 
-  unlinkPersonFromFamily(personId: string, familyId: string): { query: string; params: Record<string, any> } {
+  unlinkPersonFromFamily(
+    personId: string,
+    familyId: string,
+  ): { query: string; params: Record<string, any> } {
     return {
       query: `
         MATCH (p:Person {id: $personId})-[r:MEMBER_OF]->(f:Family {id: $familyId})
@@ -108,7 +126,10 @@ export const familyQueries = {
     };
   },
 
-  getFamilyTree(familyId: string, depth: number = 10): { query: string; params: Record<string, any> } {
+  getFamilyTree(
+    familyId: string,
+    depth: number = 10,
+  ): { query: string; params: Record<string, any> } {
     return {
       query: `
         MATCH (f:Family {id: $familyId})

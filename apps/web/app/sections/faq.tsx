@@ -3,7 +3,13 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
-import { Container, Section, SectionHeader, SectionTitle, SectionDescription } from '@digital-family-tree/ui';
+import {
+  Container,
+  Section,
+  SectionHeader,
+  SectionTitle,
+  SectionDescription,
+} from '@digital-family-tree/ui';
 import { cn } from '@digital-family-tree/ui';
 
 const faqs = [
@@ -33,9 +39,9 @@ const faqs = [
       'We support importing from GEDCOM files, which is the standard format used by most genealogy software. We are also building direct integrations with popular platforms to make migration seamless.',
   },
   {
-    question: 'When will the platform be available?',
+    question: 'Can I export my family tree?',
     answer:
-      'We are currently in early development. Our foundation and design system are built, and we are working on core features. Sign up for our newsletter to be notified when we launch our beta program.',
+      'Yes. You can export your entire family tree in standard GEDCOM format, which is compatible with most genealogy software. You can also export individual branches and generate printable family charts.',
   },
 ];
 
@@ -57,12 +63,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
           )}
         />
       </button>
-      <div
-        className={cn(
-          'overflow-hidden transition-all duration-300',
-          open ? 'pb-5' : 'h-0',
-        )}
-      >
+      <div className={cn('overflow-hidden transition-all duration-300', open ? 'pb-5' : 'h-0')}>
         <p className="text-muted-foreground leading-relaxed">{answer}</p>
       </div>
     </div>

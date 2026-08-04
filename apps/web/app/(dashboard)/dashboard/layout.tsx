@@ -1,11 +1,13 @@
 ﻿'use client';
 
 import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { ChevronLeft, Menu, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { Skeleton, SkeletonCard } from '@/components/ui/skeleton';
 import NotificationBell from './components/notification-bell';
 import {
   NAV_CONFIG,
@@ -41,6 +43,7 @@ function collectAllItems(entries: NavEntry[]): NavItem[] {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const isMobile = useMediaQuery('(max-width: 767px)');
@@ -111,14 +114,47 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (!loading && !user) {
-      window.location.href = '/login';
+      router.replace('/login');
     }
-  }, [user, loading]);
+  }, [user, loading, router]);
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+        <div className="hidden w-64 shrink-0 border-r border-slate-200 p-4 lg:block dark:border-slate-800">
+          <div className="space-y-4">
+            <Skeleton variant="rounded" width="100%" height={32} />
+            <div className="space-y-2 pt-4">
+              <Skeleton variant="text" width="60%" height={14} count={1} />
+              <Skeleton variant="text" width="80%" height={12} count={4} />
+            </div>
+            <div className="space-y-2 pt-4">
+              <Skeleton variant="text" width="50%" height={14} count={1} />
+              <Skeleton variant="text" width="75%" height={12} count={3} />
+            </div>
+            <div className="space-y-2 pt-4">
+              <Skeleton variant="text" width="45%" height={14} count={1} />
+              <Skeleton variant="text" width="70%" height={12} count={3} />
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 p-6">
+          <div className="flex items-center justify-between">
+            <Skeleton variant="text" width={200} height={28} />
+            <Skeleton variant="rounded" width={36} height={36} />
+          </div>
+          <div className="mt-8 grid gap-6 lg:grid-cols-3">
+            <div className="space-y-4 lg:col-span-2">
+              <SkeletonCard />
+              <SkeletonCard />
+            </div>
+            <div className="space-y-4">
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -128,7 +164,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const sidebarWidthClass = collapsed ? 'w-[68px]' : 'w-64';
 
   const sidebarContent = (
-    <div className={`flex h-full flex-col bg-white dark:bg-slate-900 ${sidebarWidthClass} transition-[width] duration-200`}>
+    <div
+      className={`flex h-full flex-col bg-white dark:bg-slate-900 ${sidebarWidthClass} transition-[width] duration-200`}
+    >
       {/* HEADER - fixed */}
       <div className="flex h-16 shrink-0 items-center border-b border-slate-200 px-4 dark:border-slate-800">
         {(!collapsed || isMobile) && (
@@ -304,14 +342,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {user?.displayName || user?.name}
                   </p>
                   {user?.emailVerified && (
-                    <svg className="h-3.5 w-3.5 shrink-0 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    <svg
+                      className="h-3.5 w-3.5 shrink-0 text-emerald-500"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   )}
                 </div>
-                <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                  {user?.email}
-                </p>
+                <p className="truncate text-xs text-slate-500 dark:text-slate-400">{user?.email}</p>
               </div>
             )}
           </Link>
@@ -323,7 +367,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               aria-label="Sign out"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
               </svg>
             </button>
           )}
@@ -388,14 +437,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Main content */}
         <main
           className="flex-1 min-w-0"
-          style={{ marginLeft: isMobile ? 0 : collapsed ? 68 : 256, transition: 'margin-left 0.2s ease' }}
+          style={{
+            marginLeft: isMobile ? 0 : collapsed ? 68 : 256,
+            transition: 'margin-left 0.2s ease',
+          }}
         >
           <div className="sticky top-0 z-20 flex h-16 items-center justify-end border-b border-slate-200 bg-white/80 px-6 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
             <NotificationBell />
           </div>
-          <div className="p-4 sm:p-6 lg:p-8">
-            {children}
-          </div>
+          <ErrorBoundary>
+            <div className="p-4 sm:p-6 lg:p-8">{children}</div>
+          </ErrorBoundary>
         </main>
       </div>
     </SidebarContext.Provider>

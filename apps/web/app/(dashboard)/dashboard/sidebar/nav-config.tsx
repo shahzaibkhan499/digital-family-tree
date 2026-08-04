@@ -47,9 +47,7 @@ export interface NavGroup {
   items: NavItem[];
 }
 
-export type NavEntry =
-  | { type: 'item'; item: NavItem }
-  | { type: 'group'; group: NavGroup };
+export type NavEntry = { type: 'item'; item: NavItem } | { type: 'group'; group: NavGroup };
 
 export const NAV_CONFIG: NavEntry[] = [
   {
@@ -83,13 +81,48 @@ export const NAV_CONFIG: NavEntry[] = [
       items: [
         { id: 'timeline-all', label: 'Timeline', href: '/dashboard/timeline', icon: Clock },
         { id: 'timeline-new', label: 'Create Event', href: '/dashboard/timeline/new', icon: Plus },
-        { id: 'timeline-search', label: 'Search', href: '/dashboard/timeline/search', icon: Search },
-        { id: 'timeline-drafts', label: 'Drafts', href: '/dashboard/timeline/drafts', icon: FileText },
-        { id: 'timeline-analytics', label: 'Analytics', href: '/dashboard/timeline/analytics', icon: BarChart3 },
-        { id: 'timeline-bookmarks', label: 'Bookmarks', href: '/dashboard/timeline/bookmarks', icon: Bookmark },
-        { id: 'timeline-calendar', label: 'Calendar', href: '/dashboard/timeline/calendar', icon: Calendar },
-        { id: 'timeline-templates', label: 'Templates', href: '/dashboard/timeline/templates', icon: Layout },
-        { id: 'timeline-settings', label: 'Settings', href: '/dashboard/timeline/settings', icon: Settings },
+        {
+          id: 'timeline-search',
+          label: 'Search',
+          href: '/dashboard/timeline/search',
+          icon: Search,
+        },
+        {
+          id: 'timeline-drafts',
+          label: 'Drafts',
+          href: '/dashboard/timeline/drafts',
+          icon: FileText,
+        },
+        {
+          id: 'timeline-analytics',
+          label: 'Analytics',
+          href: '/dashboard/timeline/analytics',
+          icon: BarChart3,
+        },
+        {
+          id: 'timeline-bookmarks',
+          label: 'Bookmarks',
+          href: '/dashboard/timeline/bookmarks',
+          icon: Bookmark,
+        },
+        {
+          id: 'timeline-calendar',
+          label: 'Calendar',
+          href: '/dashboard/timeline/calendar',
+          icon: Calendar,
+        },
+        {
+          id: 'timeline-templates',
+          label: 'Templates',
+          href: '/dashboard/timeline/templates',
+          icon: Layout,
+        },
+        {
+          id: 'timeline-settings',
+          label: 'Settings',
+          href: '/dashboard/timeline/settings',
+          icon: Settings,
+        },
       ],
     },
   },
@@ -117,8 +150,18 @@ export const NAV_CONFIG: NavEntry[] = [
         { id: 'documents', label: 'Document Vault', href: '/dashboard/documents', icon: FileText },
         { id: 'collections', label: 'Collections', href: '/dashboard/collections', icon: Archive },
         { id: 'gallery', label: 'Gallery', href: '/dashboard/gallery', icon: Image },
-        { id: 'knowledge-base', label: 'Knowledge Base', href: '/dashboard/knowledge-base', icon: BookMarked },
-        { id: 'document-timeline', label: 'Document Timeline', href: '/dashboard/documents/timeline', icon: Clock },
+        {
+          id: 'knowledge-base',
+          label: 'Knowledge Base',
+          href: '/dashboard/knowledge-base',
+          icon: BookMarked,
+        },
+        {
+          id: 'document-timeline',
+          label: 'Document Timeline',
+          href: '/dashboard/documents/timeline',
+          icon: Clock,
+        },
       ],
     },
   },
@@ -129,9 +172,26 @@ export const NAV_CONFIG: NavEntry[] = [
       label: 'Management',
       icon: Search,
       items: [
-        { id: 'duplicates', label: 'Duplicates', href: '/dashboard/duplicates', icon: Copy, roles: ['ADMIN', 'CLAN_ADMIN'] },
-        { id: 'merge-history', label: 'Merge History', href: '/dashboard/merge/history', icon: History, roles: ['ADMIN', 'CLAN_ADMIN'] },
-        { id: 'notifications', label: 'Notifications', href: '/dashboard/notifications', icon: Bell },
+        {
+          id: 'duplicates',
+          label: 'Duplicates',
+          href: '/dashboard/duplicates',
+          icon: Copy,
+          roles: ['ADMIN', 'CLAN_ADMIN'],
+        },
+        {
+          id: 'merge-history',
+          label: 'Merge History',
+          href: '/dashboard/merge/history',
+          icon: History,
+          roles: ['ADMIN', 'CLAN_ADMIN'],
+        },
+        {
+          id: 'notifications',
+          label: 'Notifications',
+          href: '/dashboard/notifications',
+          icon: Bell,
+        },
       ],
     },
   },
@@ -149,16 +209,29 @@ export const NAV_CONFIG: NavEntry[] = [
   },
 ];
 
+function roleMatch(
+  itemRoles: string[] | undefined,
+  orRoles: string[] | undefined,
+  userRole: string,
+): boolean {
+  if (itemRoles && itemRoles.includes(userRole)) return true;
+  if (orRoles && orRoles.includes(userRole)) return true;
+  return false;
+}
+
 export function filterByRole(entries: NavEntry[], userRole?: string): NavEntry[] {
   if (!userRole) {
     return entries
       .map((entry) => {
         if (entry.type === 'item') {
           if (entry.item.roles && entry.item.roles.length > 0) return null;
+          if (entry.item.orRoles && entry.item.orRoles.length > 0) return null;
           return entry;
         }
         const filteredItems = entry.group.items.filter(
-          (item) => !item.roles || item.roles.length === 0,
+          (item) =>
+            (!item.roles || item.roles.length === 0) &&
+            (!item.orRoles || item.orRoles.length === 0),
         );
         if (filteredItems.length === 0) return null;
         return { ...entry, group: { ...entry.group, items: filteredItems } };
@@ -169,14 +242,14 @@ export function filterByRole(entries: NavEntry[], userRole?: string): NavEntry[]
   return entries
     .map((entry) => {
       if (entry.type === 'item') {
-        if (entry.item.roles && entry.item.roles.length > 0) {
-          if (!entry.item.roles.includes(userRole)) return null;
+        if (entry.item.roles || entry.item.orRoles) {
+          if (!roleMatch(entry.item.roles, entry.item.orRoles, userRole)) return null;
         }
         return entry;
       }
       const filteredItems = entry.group.items.filter((item) => {
-        if (!item.roles || item.roles.length === 0) return true;
-        return item.roles.includes(userRole);
+        if (!item.roles && !item.orRoles) return true;
+        return roleMatch(item.roles, item.orRoles, userRole);
       });
       if (filteredItems.length === 0) return null;
       return { ...entry, group: { ...entry.group, items: filteredItems } };
@@ -205,9 +278,7 @@ export function searchNav(entries: NavEntry[], query: string): NavEntry[] {
         if (entry.item.label.toLowerCase().includes(q)) return entry;
         return null;
       }
-      const matchedItems = entry.group.items.filter((item) =>
-        item.label.toLowerCase().includes(q),
-      );
+      const matchedItems = entry.group.items.filter((item) => item.label.toLowerCase().includes(q));
       if (matchedItems.length === 0) return null;
       return { ...entry, group: { ...entry.group, items: matchedItems } };
     })

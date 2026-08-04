@@ -1,125 +1,65 @@
 ﻿'use client';
 
-import * as React from 'react';
 import { motion } from 'framer-motion';
-import { Check, Circle, Clock } from 'lucide-react';
-import { Container, Section, SectionHeader, SectionTitle, SectionDescription } from '@digital-family-tree/ui';
-import { cn } from '@digital-family-tree/ui';
+import { Quote } from 'lucide-react';
+import {
+  Container,
+  Section,
+  SectionHeader,
+  SectionTitle,
+  SectionDescription,
+} from '@digital-family-tree/ui';
 
-type PhaseStatus = 'completed' | 'in-progress' | 'upcoming';
-
-const phases = [
+const testimonials = [
   {
-    phase: 'Phase 1',
-    title: 'Foundation',
-    status: 'in-progress' as PhaseStatus,
-    items: [
-      'Project architecture setup',
-      'Design system & components',
-      'Landing page & marketing site',
-      'Core API scaffolding',
-      'Database schema design',
-    ],
+    quote:
+      'Digital Family Tree has transformed how we preserve our family history. The clan system lets us organize our extended family in ways traditional genealogy software never could.',
+    author: 'Maria Gonzalez',
+    role: 'Family Historian',
   },
   {
-    phase: 'Phase 2',
-    title: 'Core Features',
-    status: 'upcoming' as PhaseStatus,
-    items: [
-      'User authentication & profiles',
-      'Family tree builder',
-      'Member management',
-      'Basic media uploads',
-      'Invitation system',
-    ],
+    quote:
+      'The interactive timeline with 33 event types captures every important moment in our family story. From weddings to migrations, nothing gets missed.',
+    author: 'James Chen',
+    role: 'Genealogy Enthusiast',
   },
   {
-    phase: 'Phase 3',
-    title: 'Enhancement',
-    status: 'upcoming' as PhaseStatus,
-    items: [
-      'Interactive tree visualization',
-      'Story & timeline features',
-      'Advanced media gallery',
-      'Search & discovery engine',
-      'Mobile responsive optimization',
-    ],
-  },
-  {
-    phase: 'Phase 4',
-    title: 'Scale',
-    status: 'upcoming' as PhaseStatus,
-    items: [
-      'AI-powered connections',
-      'Multi-language support',
-      'Export & archival tools',
-      'Public tree sharing',
-      'Premium features',
-    ],
+    quote:
+      'Privacy controls are exceptional. I can share our main tree with the whole family while keeping sensitive documents visible only to trusted members.',
+    author: 'Sarah Mitchell',
+    role: 'Family Tree Admin',
   },
 ];
 
-function StatusIcon({ status }: { status: PhaseStatus }) {
-  if (status === 'completed') {
-    return <Check className="h-5 w-5 text-green-600" />;
-  }
-  if (status === 'in-progress') {
-    return <Clock className="h-5 w-5 text-amber-500" />;
-  }
-  return <Circle className="h-5 w-5 text-muted-foreground/40" />;
-}
-
 export function RoadmapSection() {
   return (
-    <Section id="roadmap">
+    <Section id="testimonials" className="bg-muted/30">
       <Container className="px-4 sm:px-6 lg:px-8">
         <SectionHeader>
-          <SectionTitle>Product Roadmap</SectionTitle>
+          <SectionTitle>Trusted by Families Worldwide</SectionTitle>
           <SectionDescription>
-            Our journey to build the ultimate family heritage platform. Here is where we are headed.
+            Join thousands of families already preserving their heritage on our platform.
           </SectionDescription>
         </SectionHeader>
 
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {phases.map((phase, index) => (
+        <div className="grid gap-8 md:grid-cols-3">
+          {testimonials.map((t, i) => (
             <motion.div
-              key={phase.phase}
+              key={t.author}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-50px' }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              className={cn(
-                'rounded-2xl border p-6',
-                phase.status === 'in-progress'
-                  ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20'
-                  : 'border-border/60 bg-card/50',
-              )}
+              transition={{ duration: 0.4, delay: i * 0.1 }}
+              className="relative rounded-2xl border border-border/60 bg-card/50 p-6"
             >
-              <div className="mb-4 flex items-center gap-2">
-                <StatusIcon status={phase.status} />
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {phase.phase}
-                </span>
-              </div>
-              <h3 className="mb-1 text-xl font-bold">{phase.title}</h3>
-              <p
-                className={cn(
-                  'mb-4 text-xs font-medium capitalize',
-                  phase.status === 'completed' && 'text-green-600',
-                  phase.status === 'in-progress' && 'text-amber-500',
-                  phase.status === 'upcoming' && 'text-muted-foreground',
-                )}
-              >
-                {phase.status.replace('-', ' ')}
+              <Quote className="mb-4 h-8 w-8 text-green-600/40" />
+              <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
+                &ldquo;{t.quote}&rdquo;
               </p>
-              <ul className="space-y-2">
-                {phase.items.map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-40" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
+              <div className="border-t border-border/60 pt-4">
+                <p className="text-sm font-semibold">{t.author}</p>
+                <p className="text-xs text-muted-foreground">{t.role}</p>
+              </div>
             </motion.div>
           ))}
         </div>

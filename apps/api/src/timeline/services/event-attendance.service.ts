@@ -1,31 +1,52 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class EventAttendanceService {
   constructor(private prisma: PrismaService) {}
 
-  async checkIn(eventId: string, userId: string, method: string = 'MANUAL', location?: any) {
+  private async assertCanManage(eventId: string, requesterId: string, targetUserId: string) {
+    if (requesterId === targetUserId) return;
+    const event = await this.prisma.timelineEvent.findUnique({
+      where: { id: eventId },
+      select: { createdById: true },
+    });
+    if (!event) throw new NotFoundException('Event not found');
+    if (event.createdById !== requesterId) {
+      throw new ForbiddenException('Only the event owner can manage attendance of other guests');
+    }
+  }
+
+  async checkIn(
+    eventId: string,
+    requesterId: string,
+    targetUserId: string,
+    method: string = 'MANUAL',
+    location?: any,
+  ) {
+    await this.assertCanManage(eventId, requesterId, targetUserId);
     return this.prisma.eventAttendance.upsert({
-      where: { eventId_userId: { eventId, userId } },
+      where: { eventId_userId: { eventId, userId: targetUserId } },
       create: {
         eventId,
-        userId,
+        userId: targetUserId,
         method,
         checkedInAt: new Date(),
         location: location || undefined,
       },
       update: {
         checkedInAt: new Date(),
+        checkedOutAt: null,
         method,
         location: location || undefined,
       },
     });
   }
 
-  async checkOut(eventId: string, userId: string) {
+  async checkOut(eventId: string, requesterId: string, targetUserId: string) {
+    await this.assertCanManage(eventId, requesterId, targetUserId);
     return this.prisma.eventAttendance.update({
-      where: { eventId_userId: { eventId, userId } },
+      where: { eventId_userId: { eventId, userId: targetUserId } },
       data: { checkedOutAt: new Date() },
     });
   }

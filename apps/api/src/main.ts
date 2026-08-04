@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
+import * as cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'body-parser';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
@@ -18,6 +19,7 @@ async function bootstrap() {
   app.enableShutdownHooks();
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ extended: true, limit: '10mb' }));
+  app.use(cookieParser());
   app.useGlobalFilters(new AllExceptionsFilter());
 
   const port = process.env.PORT || 4000;
@@ -25,10 +27,33 @@ async function bootstrap() {
 
   app.setGlobalPrefix(apiPrefix);
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+          connectSrc: ["'self'"],
+        },
+      },
+      strictTransportSecurity: { maxAge: 31536000, includeSubDomains: true, preload: true },
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      noSniff: true,
+      xssFilter: true,
+      frameguard: { action: 'deny' },
+    }),
+  );
 
   app.enableCors({
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()) : ['http://localhost:4001','https://digital-family-tree-web.vercel.app', 'http://localhost:4002'],
+    origin: process.env.CORS_ORIGIN
+      ? process.env.CORS_ORIGIN.split(',').map((s) => s.trim())
+      : [
+          'http://localhost:4001',
+          'https://digital-family-tree-web.vercel.app',
+          'http://localhost:4002',
+        ],
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Refresh-Token', 'X-Admin-Key'],
@@ -43,15 +68,17 @@ async function bootstrap() {
     }),
   );
 
-  const config = new DocumentBuilder()
-    .setTitle('Digital Family Tree API')
-    .setDescription('API for the Digital Family Tree platform')
-    .setVersion('0.1.0')
-    .addBearerAuth()
-    .build();
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Digital Family Tree API')
+      .setDescription('API for the Digital Family Tree platform')
+      .setVersion('0.1.0')
+      .addBearerAuth()
+      .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
+  }
 
   await app.listen(port);
 

@@ -1,22 +1,43 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, useCallback, useRef, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, memo, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { api } from '@/lib/api-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Plus, Search, X, AlertCircle, Users, Globe, Users2,
-  FileText, Calendar, Clock, MapPin,
-  CheckCircle, RefreshCw, ArrowDown,
-  MessageCircle, Heart, Link2, Bookmark, MoreHorizontal,
-  EyeOff, Image as ImageIcon,
+  Plus,
+  Search,
+  X,
+  AlertCircle,
+  Users,
+  Globe,
+  Users2,
+  FileText,
+  Calendar,
+  Clock,
+  MapPin,
+  CheckCircle,
+  RefreshCw,
+  ArrowDown,
+  MessageCircle,
+  Heart,
+  Link2,
+  Bookmark,
+  MoreHorizontal,
+  EyeOff,
+  Image as ImageIcon,
 } from 'lucide-react';
 import {
-  getEventConfig, formatDate, getEventStatus, EVENT_TYPE_CONFIG,
-  calcCountdown, formatRelative, formatTime,
+  getEventConfig,
+  formatDate,
+  getEventStatus,
+  EVENT_TYPE_CONFIG,
+  calcCountdown,
+  formatRelative,
+  formatTime,
 } from './components/constants';
 import FilterPanel, { type AdvancedFilters } from './components/filter-panel';
 import TimelineFilterChips from './components/timeline-filter-chips';
@@ -110,16 +131,21 @@ function readSearchParams(sp: URLSearchParams): AdvancedFilters {
 
 function writeSearchParams(filters: AdvancedFilters): string {
   const params = new URLSearchParams();
-  Object.entries(filters).forEach(([k, v]) => { if (v) params.set(k, v); });
+  Object.entries(filters).forEach(([k, v]) => {
+    if (v) params.set(k, v);
+  });
   return params.toString();
 }
 
 function getTimePeriod(dateStr: string): string {
   const d = new Date(dateStr);
   const now = new Date();
-  const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date(todayStart); todayEnd.setDate(todayEnd.getDate() + 1);
-  const weekEnd = new Date(todayStart); weekEnd.setDate(weekEnd.getDate() + (7 - weekEnd.getDay()));
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date(todayStart);
+  todayEnd.setDate(todayEnd.getDate() + 1);
+  const weekEnd = new Date(todayStart);
+  weekEnd.setDate(weekEnd.getDate() + (7 - weekEnd.getDay()));
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
   if (d >= todayStart && d < todayEnd) return 'Today';
@@ -167,7 +193,12 @@ function groupEventsByTimePeriod(events: EventItem[]) {
 }
 
 const VIS_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  ONLY_ME: EyeOff, FAMILY: Users, SUB_CLAN: Users2, CLAN: Globe, COMMUNITY: Globe, PUBLIC: Globe,
+  ONLY_ME: EyeOff,
+  FAMILY: Users,
+  SUB_CLAN: Users2,
+  CLAN: Globe,
+  COMMUNITY: Globe,
+  PUBLIC: Globe,
 };
 
 const cardVariants = {
@@ -210,7 +241,12 @@ const FeedCard = memo(function FeedCard({
       role="article"
       aria-label={event.title}
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelect(); } }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleSelect();
+        }
+      }}
       onClick={handleSelect}
       className={`group relative cursor-pointer overflow-hidden rounded-2xl border bg-white transition-all duration-200 dark:bg-slate-900 ${
         isSelected
@@ -221,7 +257,9 @@ const FeedCard = memo(function FeedCard({
       <div className="p-5">
         {/* Header: Avatar + Author + Time + Menu */}
         <div className="flex items-start gap-3">
-          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg ring-2 ring-white dark:ring-slate-900 ${config.color}`}>
+          <div
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg ring-2 ring-white dark:ring-slate-900 ${config.color}`}
+          >
             {config.icon}
           </div>
           <div className="min-w-0 flex-1">
@@ -229,13 +267,14 @@ const FeedCard = memo(function FeedCard({
               <h3 className="truncate text-sm font-semibold text-slate-900 dark:text-white">
                 {event.title}
               </h3>
-              {event.verified && (
-                <CheckCircle className="h-4 w-4 shrink-0 text-emerald-500" />
-              )}
+              {event.verified && <CheckCircle className="h-4 w-4 shrink-0 text-emerald-500" />}
             </div>
             <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-current" style={{ color: 'inherit' }} />
+                <span
+                  className="h-1.5 w-1.5 rounded-full bg-current"
+                  style={{ color: 'inherit' }}
+                />
                 {config.label}
               </span>
               <span aria-hidden="true">Â·</span>
@@ -243,7 +282,9 @@ const FeedCard = memo(function FeedCard({
             </div>
           </div>
           <button
-            onClick={(e) => { e.stopPropagation(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 opacity-0 transition-all hover:bg-slate-100 hover:text-slate-600 group-hover:opacity-100 dark:hover:bg-slate-800 dark:hover:text-slate-300"
             aria-label="More actions"
           >
@@ -348,9 +389,7 @@ const FeedCard = memo(function FeedCard({
             </span>
           )}
           {eventStatus === 'upcoming' && (
-            <span className="text-xs font-medium text-blue-500">
-              {calcCountdown(event.date)}
-            </span>
+            <span className="text-xs font-medium text-blue-500">{calcCountdown(event.date)}</span>
           )}
         </div>
       </div>
@@ -453,7 +492,10 @@ function StatsSidebar({ stats, loading }: { stats: TimelineStats | null; loading
     return (
       <div className="space-y-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 rounded-xl border border-slate-200/60 bg-white/80 p-3.5 shadow-sm backdrop-blur-xl animate-pulse dark:border-slate-800/60 dark:bg-slate-900/80">
+          <div
+            key={i}
+            className="flex items-center gap-3 rounded-xl border border-slate-200/60 bg-white/80 p-3.5 shadow-sm backdrop-blur-xl animate-pulse dark:border-slate-800/60 dark:bg-slate-900/80"
+          >
             <div className="h-10 w-10 shrink-0 rounded-xl bg-slate-100 dark:bg-slate-800" />
             <div className="space-y-1.5">
               <div className="h-4 w-12 rounded bg-slate-200 dark:bg-slate-700" />
@@ -466,10 +508,34 @@ function StatsSidebar({ stats, loading }: { stats: TimelineStats | null; loading
   }
 
   const items = [
-    { icon: <Calendar className="h-4 w-4" />, label: 'Total Events', value: stats?.total || 0, bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-600 dark:text-emerald-400' },
-    { icon: <Users className="h-4 w-4" />, label: 'Participants', value: stats?.participants || 0, bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400' },
-    { icon: <FileText className="h-4 w-4" />, label: 'Documents', value: stats?.totalDocuments || 0, bg: 'bg-violet-50 dark:bg-violet-900/20', text: 'text-violet-600 dark:text-violet-400' },
-    { icon: <Globe className="h-4 w-4" />, label: 'Countries', value: stats?.countries || 0, bg: 'bg-cyan-50 dark:bg-cyan-900/20', text: 'text-cyan-600 dark:text-cyan-400' },
+    {
+      icon: <Calendar className="h-4 w-4" />,
+      label: 'Total Events',
+      value: stats?.total || 0,
+      bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+      text: 'text-emerald-600 dark:text-emerald-400',
+    },
+    {
+      icon: <Users className="h-4 w-4" />,
+      label: 'Participants',
+      value: stats?.participants || 0,
+      bg: 'bg-blue-50 dark:bg-blue-900/20',
+      text: 'text-blue-600 dark:text-blue-400',
+    },
+    {
+      icon: <FileText className="h-4 w-4" />,
+      label: 'Documents',
+      value: stats?.totalDocuments || 0,
+      bg: 'bg-violet-50 dark:bg-violet-900/20',
+      text: 'text-violet-600 dark:text-violet-400',
+    },
+    {
+      icon: <Globe className="h-4 w-4" />,
+      label: 'Countries',
+      value: stats?.countries || 0,
+      bg: 'bg-cyan-50 dark:bg-cyan-900/20',
+      text: 'text-cyan-600 dark:text-cyan-400',
+    },
   ];
 
   return (
@@ -479,12 +545,16 @@ function StatsSidebar({ stats, loading }: { stats: TimelineStats | null; loading
           key={item.label}
           className="flex items-center gap-3 rounded-xl border border-slate-200/60 bg-white/80 p-3.5 shadow-sm backdrop-blur-xl transition-all hover:shadow-md dark:border-slate-800/60 dark:bg-slate-900/80"
         >
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.bg} ${item.text}`}>
+          <div
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.bg} ${item.text}`}
+          >
             {item.icon}
           </div>
           <div>
             <p className="text-lg font-bold text-slate-900 dark:text-white">{item.value}</p>
-            <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">{item.label}</p>
+            <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              {item.label}
+            </p>
           </div>
         </div>
       ))}
@@ -519,8 +589,12 @@ function UpcomingList({ events }: { events: EventItem[] }) {
             >
               <span className="text-base">{config.icon}</span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-medium text-slate-900 dark:text-white">{event.title}</p>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500">{calcCountdown(event.date)}</p>
+                <p className="truncate text-xs font-medium text-slate-900 dark:text-white">
+                  {event.title}
+                </p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                  {calcCountdown(event.date)}
+                </p>
               </div>
             </Link>
           );
@@ -541,7 +615,9 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
         <AlertCircle className="h-7 w-7 text-red-500" />
       </div>
       <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Something went wrong</h3>
-      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">We couldn't load your timeline events.</p>
+      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+        We couldn't load your timeline events.
+      </p>
       <button
         onClick={onRetry}
         className="mt-6 flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm shadow-emerald-600/20 transition-all hover:bg-emerald-700 hover:shadow-md"
@@ -553,7 +629,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-export default function TimelinePage() {
+function TimelinePageContent() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -572,19 +648,28 @@ export default function TimelinePage() {
   const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
   const [filters, setFilters] = useState<AdvancedFilters>(() => readSearchParams(searchParams));
 
-  const hasActiveFilters = useMemo(() => Object.values(filters).some(Boolean) || selectedTypes.length > 0, [filters, selectedTypes]);
+  const hasActiveFilters = useMemo(
+    () => Object.values(filters).some(Boolean) || selectedTypes.length > 0,
+    [filters, selectedTypes],
+  );
 
-  const updateUrl = useCallback((f: AdvancedFilters) => {
-    const qs = writeSearchParams(f);
-    router.replace(`/dashboard/timeline${qs ? '?' + qs : ''}`, { scroll: false });
-  }, [router]);
+  const updateUrl = useCallback(
+    (f: AdvancedFilters) => {
+      const qs = writeSearchParams(f);
+      router.replace(`/dashboard/timeline${qs ? '?' + qs : ''}`, { scroll: false });
+    },
+    [router],
+  );
 
-  const handleFilterChange = useCallback((f: AdvancedFilters) => {
-    setFilters(f);
-    setPage(1);
-    setEvents([]);
-    updateUrl(f);
-  }, [updateUrl]);
+  const handleFilterChange = useCallback(
+    (f: AdvancedFilters) => {
+      setFilters(f);
+      setPage(1);
+      setEvents([]);
+      updateUrl(f);
+    },
+    [updateUrl],
+  );
 
   const handleToggleType = useCallback((type: string) => {
     setSelectedTypes((prev) => {
@@ -601,36 +686,39 @@ export default function TimelinePage() {
     setEvents([]);
   }, []);
 
-  const fetchEvents = useCallback(async (p: number, append = false) => {
-    if (append) setLoadingMore(true);
-    else setLoading(true);
+  const fetchEvents = useCallback(
+    async (p: number, append = false) => {
+      if (append) setLoadingMore(true);
+      else setLoading(true);
 
-    try {
-      const params: Record<string, string | number> = { page: p, limit: PAGE_LIMIT };
-      if (filters.search) params.search = filters.search;
-      if (filters.eventType) params.eventType = filters.eventType;
-      if (filters.visibility) params.visibility = filters.visibility;
-      if (filters.familyId) params.familyId = filters.familyId;
-      if (filters.dateFrom) params.dateFrom = filters.dateFrom;
-      if (filters.dateTo) params.dateTo = filters.dateTo;
-      if (filters.status) params.status = filters.status;
-      if (selectedTypes.length === 1) params.eventType = selectedTypes[0];
+      try {
+        const params: Record<string, string | number> = { page: p, limit: PAGE_LIMIT };
+        if (filters.search) params.search = filters.search;
+        if (filters.eventType) params.eventType = filters.eventType;
+        if (filters.visibility) params.visibility = filters.visibility;
+        if (filters.familyId) params.familyId = filters.familyId;
+        if (filters.dateFrom) params.dateFrom = filters.dateFrom;
+        if (filters.dateTo) params.dateTo = filters.dateTo;
+        if (filters.status) params.status = filters.status;
+        if (selectedTypes.length === 1) params.eventType = selectedTypes[0];
 
-      const res = await api.timeline.list(params);
-      const evts = res?.events || [];
+        const res = await api.timeline.list(params);
+        const evts = res?.events || [];
 
-      setEvents((prev) => append ? [...prev, ...evts] : evts);
-      setTotalPages(res?.totalPages || 1);
-      setPage(p);
-      setError(null);
-    } catch {
-      if (!append) setEvents([]);
-      setError('Failed to load events. Please try again.');
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [filters, selectedTypes]);
+        setEvents((prev) => (append ? [...prev, ...evts] : evts));
+        setTotalPages(res?.totalPages || 1);
+        setPage(p);
+        setError(null);
+      } catch {
+        if (!append) setEvents([]);
+        setError('Failed to load events. Please try again.');
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [filters, selectedTypes],
+  );
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login');
@@ -638,7 +726,10 @@ export default function TimelinePage() {
 
   useEffect(() => {
     if (!user) return;
-    api.timeline.stats().then((s) => setStats(s)).catch(() => {});
+    api.timeline
+      .stats()
+      .then((s) => setStats(s))
+      .catch(() => {});
     fetchEvents(1);
   }, [user]);
 
@@ -728,7 +819,9 @@ export default function TimelinePage() {
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Timeline</h1>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              {stats?.total ? `${stats.total} events in your family history` : 'Your family history and events'}
+              {stats?.total
+                ? `${stats.total} events in your family history`
+                : 'Your family history and events'}
             </p>
           </div>
           <Link
@@ -774,7 +867,6 @@ export default function TimelinePage() {
 
       {/* â”€â”€â”€ 3-Column Layout â”€â”€â”€ */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_1fr_320px]">
-
         {/* LEFT SIDEBAR â€” Stats + Upcoming */}
         <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-6">
@@ -789,7 +881,12 @@ export default function TimelinePage() {
         </aside>
 
         {/* CENTER â€” Feed */}
-        <main id="timeline-feed" role="feed" aria-label="Timeline events" aria-busy={isLoading || loadingMore}>
+        <main
+          id="timeline-feed"
+          role="feed"
+          aria-label="Timeline events"
+          aria-busy={isLoading || loadingMore}
+        >
           {isLoading ? (
             <TimelineFeedSkeleton count={6} />
           ) : error && events.length === 0 ? (
@@ -846,10 +943,7 @@ export default function TimelinePage() {
         {/* RIGHT SIDEBAR â€” Quick Details */}
         <aside className="hidden lg:block">
           <div className="sticky top-24">
-            <TimelineQuickDetails
-              event={selectedEvent}
-              onClose={() => setSelectedEvent(null)}
-            />
+            <TimelineQuickDetails event={selectedEvent} onClose={() => setSelectedEvent(null)} />
           </div>
         </aside>
       </div>
@@ -873,10 +967,7 @@ export default function TimelinePage() {
               <div className="flex justify-center pt-3 pb-2">
                 <div className="h-1 w-10 rounded-full bg-slate-300 dark:bg-slate-600" />
               </div>
-              <TimelineQuickDetails
-                event={selectedEvent}
-                onClose={() => setSelectedEvent(null)}
-              />
+              <TimelineQuickDetails event={selectedEvent} onClose={() => setSelectedEvent(null)} />
             </motion.div>
           </motion.div>
         )}
@@ -901,7 +992,9 @@ export default function TimelinePage() {
               className="fixed inset-y-0 right-0 z-50 w-full max-w-md overflow-y-auto border-l border-slate-200/60 bg-white/95 shadow-2xl backdrop-blur-xl dark:border-slate-800/60 dark:bg-slate-900/95"
             >
               <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Advanced Filters</h2>
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  Advanced Filters
+                </h2>
                 <button
                   onClick={() => setShowFilters(false)}
                   className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
@@ -912,7 +1005,10 @@ export default function TimelinePage() {
               <div className="p-5">
                 <FilterPanel
                   filters={filters}
-                  onChange={(f) => { handleFilterChange(f); setShowFilters(false); }}
+                  onChange={(f) => {
+                    handleFilterChange(f);
+                    setShowFilters(false);
+                  }}
                   onClose={() => setShowFilters(false)}
                 />
               </div>
@@ -921,5 +1017,13 @@ export default function TimelinePage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function TimelinePage() {
+  return (
+    <Suspense fallback={<TimelineFeedSkeleton count={6} />}>
+      <TimelinePageContent />
+    </Suspense>
   );
 }

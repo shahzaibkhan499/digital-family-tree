@@ -2,7 +2,7 @@ import { Controller, Get, Post, Param, Body, UseGuards, Request } from '@nestjs/
 import { AuthGuard } from '@nestjs/passport';
 import { EventAttendanceService } from '../services/event-attendance.service';
 
-@Controller('api/timeline/events/:eventId/attendance')
+@Controller('timeline/events/:eventId/attendance')
 @UseGuards(AuthGuard('jwt'))
 export class EventAttendanceController {
   constructor(private attendanceService: EventAttendanceService) {}
@@ -13,17 +13,35 @@ export class EventAttendanceController {
   }
 
   @Post('check-in')
-  async checkIn(@Param('eventId') eventId: string, @Request() req: any, @Body() body: { method?: string; location?: any }) {
-    return this.attendanceService.checkIn(eventId, req.user.id, body.method, body.location);
+  async checkIn(
+    @Param('eventId') eventId: string,
+    @Request() req: any,
+    @Body() body: { userId?: string; method?: string; location?: any },
+  ) {
+    return this.attendanceService.checkIn(
+      eventId,
+      req.user.id,
+      body.userId || req.user.id,
+      body.method,
+      body.location,
+    );
   }
 
   @Post('check-out')
-  async checkOut(@Param('eventId') eventId: string, @Request() req: any) {
-    return this.attendanceService.checkOut(eventId, req.user.id);
+  async checkOut(
+    @Param('eventId') eventId: string,
+    @Request() req: any,
+    @Body() body: { userId?: string },
+  ) {
+    return this.attendanceService.checkOut(eventId, req.user.id, body.userId || req.user.id);
   }
 
   @Post('verify')
-  async verify(@Param('eventId') eventId: string, @Body() body: { userId: string }, @Request() req: any) {
+  async verify(
+    @Param('eventId') eventId: string,
+    @Body() body: { userId: string },
+    @Request() req: any,
+  ) {
     return this.attendanceService.verifyAttendance(eventId, body.userId, req.user.id);
   }
 

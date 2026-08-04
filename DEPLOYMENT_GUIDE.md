@@ -284,7 +284,8 @@ Located at project root. Used by the monorepo tooling and shared packages.
 | `JWT_SECRET`                  | ✅       | API     | `change-this-to-a-random-secret`                                    | Generate via `crypto.randomBytes(64).toString('hex')` |
 | `JWT_EXPIRATION`              | ✅       | API     | `7d`                                                                | `1h`                                                  |
 | `NODE_ENV`                    | ✅       | All     | `development`                                                       | `production`                                          |
-| `NEXT_PUBLIC_ADMIN_API_KEY`   | ✅       | Admin   | `your-admin-api-key-here`                                           | Generate a 64-char random hex string                  |
+
+> **Note:** The admin key is **server-side only** (`ADMIN_API_KEY` — see Backend table below). It is forwarded to the API by the admin app's server-side proxy (`apps/admin/app/api/nest/[...path]/route.ts`) and is never shipped to the browser; `NEXT_PUBLIC_ADMIN_API_KEY` was removed for security.
 
 ### Backend `apps/api/.env`
 
@@ -486,10 +487,21 @@ NEO4J_DATABASE=neo4j
 
 ### Sync Data from PostgreSQL to Neo4j
 
-The `SyncService` in `apps/api/src/neo4j/services/sync.service.ts` handles synchronization:
+The `SyncService` in `apps/api/src/neo4j/services/sync.service.ts` handles synchronization. Sync writes are **idempotent** (MERGE on `id`), so re-running is safe.
+
+Wired endpoint (admin API key required):
+
+```bash
+curl -X POST https://api.yourdomain.com/api/admin/neo4j/sync \
+  -H "X-Admin-Key: $ADMIN_API_KEY"
+# { "success": true, "nodesCreated": 42, "nodesUpdated": 0, "relationshipsCreated": 87, ... }
+```
+
+When Neo4j is not configured/reachable the call returns `200` (sync) with `{ "success": false, "errors": ["Neo4j not connected"] }`, and graph read endpoints (`/api/genealogy/*`) either fall back to empty results or return `503` — never silent partial data.
+
+Programmatic trigger (NestJS console/script):
 
 ```typescript
-// Trigger full sync via NestJS console or API endpoint
 const syncService = app.get(SyncService);
 const result = await syncService.syncAll();
 // { success: true, nodesCreated: 42, relationshipsCreated: 87, ... }
@@ -1895,14 +1907,19 @@ Run through this checklist after completing the entire deployment process.
 ### NEON_DATABASE_URL=postgresql://neondb_owner:[REDACTED_PASSWORD]@ep-ancient-moon-axifntr4-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require
 
 ## CLOUDINARY_CLOUD_NAME=tlzf3clg
+
 ## CLOUDINARY_API_KEY=713882242824216
+
 ## CLOUDINARY_API_SECRET=[REDACTED_CLOUDINARY_SECRET]
 
 ## NEO4J_URI=neo4j+s://d483f783.databases.neo4j.io
+
 ## NEO4J_USERNAME=d483f783
+
 ## NEO4J_PASSWORD=[REDACTED_NEO4J_PASSWORD]
 
 ## RESEND_API_KEY=[REDACTED_RESEND_KEY]
-## SENTRY_DSN=https://[REDACTED_SENTRY_KEY]@o4511803012939776.ingest.de.sentry.io/4511803106590800
-## POSTHOG_KEY=[REDACTED_POSTHOG_KEY]
 
+## SENTRY_DSN=https://[REDACTED_SENTRY_KEY]@o4511803012939776.ingest.de.sentry.io/4511803106590800
+
+## POSTHOG_KEY=[REDACTED_POSTHOG_KEY]

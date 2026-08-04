@@ -5,6 +5,47 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 
+function getErrorMessage(err: unknown): string {
+  if (typeof err === 'string') return err;
+  if (err && typeof err === 'object') {
+    const status = (err as any).status ?? (err as any).statusCode ?? (err as any).data?.statusCode;
+    const data = (err as any).data;
+
+    if (status === 429) return 'Too many attempts. Please wait a few minutes and try again.';
+    if (status === 401) return 'Invalid email or password';
+    if (status === 409) return 'This email is already registered. Please login instead.';
+
+    if (data && typeof data === 'object') {
+      const msg = data.message;
+      if (typeof msg === 'string') {
+        const cleaned = msg.replace(/^ThrottlerException:\s*/i, '');
+        if (cleaned !== msg) return cleaned;
+        if (msg === 'Invalid credentials') return 'Invalid email or password';
+        if (msg === 'Email already registered')
+          return 'This email is already registered. Please login instead.';
+        return msg;
+      }
+      if (Array.isArray(msg)) return msg.join(', ');
+      if (msg && typeof msg === 'object') {
+        const nested = (msg as any).message;
+        if (typeof nested === 'string') return nested.replace(/^ThrottlerException:\s*/i, '');
+        if (Array.isArray(nested)) return nested.join(', ');
+      }
+    }
+
+    const errMsg = (err as any).message;
+    if (typeof errMsg === 'string') {
+      const cleaned = errMsg.replace(/^ThrottlerException:\s*/i, '');
+      if (cleaned === 'Invalid credentials') return 'Invalid email or password';
+      if (cleaned === 'Email already registered')
+        return 'This email is already registered. Please login instead.';
+      return cleaned;
+    }
+    if (Array.isArray(errMsg)) return errMsg.join(', ');
+  }
+  return 'Something went wrong. Please try again.';
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,13 +62,8 @@ export default function LoginPage() {
     try {
       await login(email, password);
       router.push('/dashboard');
-    } catch (err: any) {
-      const message = err?.data?.message || err.message || 'Login failed';
-      if (Array.isArray(message)) {
-        setError(message.join(', '));
-      } else {
-        setError(message);
-      }
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -73,13 +109,17 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
               className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500"
               placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
             />
           </div>
 
           <div className="flex justify-end">
-            <Link href="/forgot-password" className="text-sm font-medium text-emerald-600 hover:text-emerald-700">
+            <Link
+              href="/forgot-password"
+              className="text-sm font-medium text-emerald-600 hover:text-emerald-700"
+            >
               Forgot password?
             </Link>
           </div>

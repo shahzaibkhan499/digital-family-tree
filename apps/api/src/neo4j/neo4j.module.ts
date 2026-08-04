@@ -1,5 +1,6 @@
 import { Module, Global } from '@nestjs/common';
 import { Neo4jService } from './neo4j.service';
+import { SyncController } from './sync.controller';
 import { GraphRepository } from './repositories/graph.repository';
 import { PersonRepository } from './repositories/person.repository';
 import { FamilyRepository } from './repositories/family.repository';
@@ -16,6 +17,7 @@ import { KinshipService } from './services/kinship.service';
 
 @Global()
 @Module({
+  controllers: [SyncController],
   providers: [
     Neo4jService,
     GraphRepository,

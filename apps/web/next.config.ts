@@ -33,7 +33,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com",
               "font-src 'self'",
-              "connect-src 'self' http://localhost:4000 http://localhost:4001 ws://localhost:4001 https://res.cloudinary.com",
+              "connect-src 'self' http://localhost:4000 http://localhost:4001 ws://localhost:4001 http://localhost:4400 ws://localhost:4400 https://res.cloudinary.com",
               "frame-ancestors 'none'",
               "form-action 'self'",
             ].join('; '),

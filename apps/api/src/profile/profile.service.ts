@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UpdatePrivacyDto } from './dto/update-privacy.dto';
@@ -127,7 +132,10 @@ export class ProfileService {
 
     let settings: string;
     if (dto.profileVisibility || dto.emailVisibility) {
-      settings = JSON.stringify({ profileVisibility: dto.profileVisibility, emailVisibility: dto.emailVisibility });
+      settings = JSON.stringify({
+        profileVisibility: dto.profileVisibility,
+        emailVisibility: dto.emailVisibility,
+      });
     } else {
       settings = user.privacySettings || '{}';
     }
@@ -170,7 +178,9 @@ export class ProfileService {
       }
     }
 
-    const percentage = Math.round(((requiredFields.length - missingFields.length) / requiredFields.length) * 100);
+    const percentage = Math.round(
+      ((requiredFields.length - missingFields.length) / requiredFields.length) * 100,
+    );
 
     return { percentage, missingFields };
   }
@@ -290,7 +300,14 @@ export class ProfileService {
 
     const slug = dto.username.toLowerCase().replace(/[^a-z0-9_-]/g, '');
 
-    this.activityEvent.emitSecurityEvent(userId, 'USERNAME_CHANGED', 'Username claimed', `Username set to ${dto.username}.`).catch(() => {});
+    this.activityEvent
+      .emitSecurityEvent(
+        userId,
+        'USERNAME_CHANGED',
+        'Username claimed',
+        `Username set to ${dto.username}.`,
+      )
+      .catch(() => {});
 
     return this.prisma.user.update({
       where: { id: userId },
@@ -306,10 +323,7 @@ export class ProfileService {
   async getPublicProfile(slug: string) {
     const user = await this.prisma.user.findFirst({
       where: {
-        OR: [
-          { profileSlug: slug },
-          { username: slug },
-        ],
+        OR: [{ profileSlug: slug }, { username: slug }],
         accountStatus: 'active',
         deletedAt: null,
       },
@@ -338,7 +352,9 @@ export class ProfileService {
     if (user.privacySettings) {
       try {
         privacy = JSON.parse(user.privacySettings);
-      } catch { /* ignore parse error */ }
+      } catch {
+        /* ignore parse error */
+      }
     }
 
     const isPublic = privacy.profileVisibility !== 'private';
@@ -382,7 +398,9 @@ export class ProfileService {
     if (user.privacySettings) {
       try {
         privacy = JSON.parse(user.privacySettings);
-      } catch { /* ignore parse error */ }
+      } catch {
+        /* ignore parse error */
+      }
     }
 
     const isPublic = privacy.profileVisibility !== 'private';
@@ -472,12 +490,18 @@ export class ProfileService {
     });
 
     const privacyMap: Record<string, string> = {};
-    privacySettings.forEach(p => { privacyMap[p.fieldName] = p.visibility; });
+    privacySettings.forEach((p) => {
+      privacyMap[p.fieldName] = p.visibility;
+    });
 
     return this.applyPrivacyFilter(user, privacyMap, viewerId);
   }
 
-  private async applyPrivacyFilter(user: any, privacyMap: Record<string, string>, viewerId: string) {
+  private async applyPrivacyFilter(
+    user: any,
+    privacyMap: Record<string, string>,
+    viewerId: string,
+  ) {
     const filtered = { ...user };
 
     const ALWAYS_VISIBLE = ['id', 'displayId', 'name', 'avatar', 'createdAt'];
@@ -487,39 +511,41 @@ export class ProfileService {
 
       let canView = false;
       switch (visibility) {
-        case 'PUBLIC': canView = true; break;
-        case 'ONLY_ME': canView = false; break;
+        case 'PUBLIC':
+          canView = true;
+          break;
+        case 'ONLY_ME':
+          canView = false;
+          break;
         case 'FAMILY': {
-          const viewerFamilies = await this.prisma.family.findMany({
-            where: { OR: [{ ownerId: viewerId }, { members: { some: {} } }] },
-            select: { id: true },
-          });
+          const viewerFamilies = await this.getMembershipFamilyIds(viewerId);
           const ownerFamilies = await this.prisma.family.findMany({
             where: { ownerId: user.id },
             select: { id: true },
           });
-          canView = viewerFamilies.some(f => ownerFamilies.some(of => of.id === f.id));
+          canView = viewerFamilies.some((f) => ownerFamilies.some((of) => of.id === f));
           break;
         }
         case 'SUB_CLAN': {
           const viewerSubClans = await this.getVisibleSubClanIds(viewerId);
           const ownerSubClans = await this.getVisibleSubClanIds(user.id);
-          canView = viewerSubClans.some(s => ownerSubClans.includes(s));
+          canView = viewerSubClans.some((s) => ownerSubClans.includes(s));
           break;
         }
         case 'CLAN': {
           const viewerClans = await this.getVisibleClanIds(viewerId);
           const ownerClans = await this.getVisibleClanIds(user.id);
-          canView = viewerClans.some(c => ownerClans.includes(c));
+          canView = viewerClans.some((c) => ownerClans.includes(c));
           break;
         }
         case 'COMMUNITY': {
           const viewerComms = await this.getVisibleCommunityIds(viewerId);
           const ownerComms = await this.getVisibleCommunityIds(user.id);
-          canView = viewerComms.some(c => ownerComms.includes(c));
+          canView = viewerComms.some((c) => ownerComms.includes(c));
           break;
         }
-        default: canView = visibility === 'PUBLIC';
+        default:
+          canView = visibility === 'PUBLIC';
       }
 
       if (!canView) filtered[fieldName] = null;
@@ -528,33 +554,58 @@ export class ProfileService {
     return filtered;
   }
 
+  private async getMembershipFamilyIds(userId: string): Promise<string[]> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    const families = await this.prisma.family.findMany({
+      where: {
+        OR: [
+          { ownerId: userId },
+          ...(user?.email
+            ? [
+                {
+                  members: {
+                    some: { email: { equals: user.email, mode: 'insensitive' as const } },
+                  },
+                },
+              ]
+            : []),
+        ],
+      },
+      select: { id: true },
+    });
+    return families.map((f) => f.id);
+  }
+
   private async getVisibleSubClanIds(userId: string): Promise<string[]> {
     const families = await this.prisma.family.findMany({
-      where: { OR: [{ ownerId: userId }, { members: { some: {} } }] },
+      where: { id: { in: await this.getMembershipFamilyIds(userId) } },
       select: { subClanId: true },
     });
-    return [...new Set(families.map(f => f.subClanId).filter(Boolean))] as string[];
+    return [...new Set(families.map((f) => f.subClanId).filter(Boolean))] as string[];
   }
 
   private async getVisibleClanIds(userId: string): Promise<string[]> {
     const families = await this.prisma.family.findMany({
-      where: { OR: [{ ownerId: userId }, { members: { some: {} } }] },
+      where: { id: { in: await this.getMembershipFamilyIds(userId) } },
       select: { clanId: true },
     });
-    return [...new Set(families.map(f => f.clanId).filter(Boolean))] as string[];
+    return [...new Set(families.map((f) => f.clanId).filter(Boolean))] as string[];
   }
 
   private async getVisibleCommunityIds(userId: string): Promise<string[]> {
     const families = await this.prisma.family.findMany({
-      where: { OR: [{ ownerId: userId }, { members: { some: {} } }] },
+      where: { id: { in: await this.getMembershipFamilyIds(userId) } },
       select: { clanId: true },
     });
-    const clanIds = [...new Set(families.map(f => f.clanId).filter(Boolean))] as string[];
+    const clanIds = [...new Set(families.map((f) => f.clanId).filter(Boolean))] as string[];
     if (clanIds.length === 0) return [];
     const clans = await this.prisma.clan.findMany({
       where: { id: { in: clanIds } },
       select: { communityId: true },
     });
-    return [...new Set(clans.map(c => c.communityId).filter(Boolean))] as string[];
+    return [...new Set(clans.map((c) => c.communityId).filter(Boolean))] as string[];
   }
 }

@@ -1,9 +1,16 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsEventService } from '../notifications/notifications-event.service';
 import { ActivityEventService } from '../activities/activity-event.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcryptjs';
+
+const BCRYPT_ROUNDS = 12;
 
 @Injectable()
 export class UsersService {
@@ -178,15 +185,19 @@ export class UsersService {
       },
     });
 
-    this.notificationsEvent.emit({
-      type: 'EMAIL_CHANGED',
-      title: 'Email Changed',
-      message: `Your email has been changed to ${newEmail}.`,
-      userId,
-      priority: 'HIGH',
-    }).catch(() => {});
+    this.notificationsEvent
+      .emit({
+        type: 'EMAIL_CHANGED',
+        title: 'Email Changed',
+        message: `Your email has been changed to ${newEmail}.`,
+        userId,
+        priority: 'HIGH',
+      })
+      .catch(() => {});
 
-    this.activityEvent.emitSecurityEvent(userId, 'EMAIL_CHANGED', 'Email changed', `Email changed to ${newEmail}.`).catch(() => {});
+    this.activityEvent
+      .emitSecurityEvent(userId, 'EMAIL_CHANGED', 'Email changed', `Email changed to ${newEmail}.`)
+      .catch(() => {});
 
     return result;
   }
@@ -208,7 +219,7 @@ export class UsersService {
       throw new BadRequestException('Current password is incorrect');
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
 
     const result = await this.prisma.user.update({
       where: { id: userId },
@@ -224,15 +235,28 @@ export class UsersService {
       },
     });
 
-    this.notificationsEvent.emit({
-      type: 'PASSWORD_CHANGED',
-      title: 'Password Changed',
-      message: 'Your password has been changed successfully.',
-      userId,
-      priority: 'HIGH',
-    }).catch(() => {});
+    await this.prisma.auditLog.create({
+      data: {
+        entityType: 'USER',
+        entityId: userId,
+        action: 'PASSWORD_CHANGE',
+        performedById: userId,
+      },
+    });
 
-    this.activityEvent.emitSecurityEvent(userId, 'PASSWORD_CHANGED', 'Password changed', 'Password was changed.').catch(() => {});
+    this.notificationsEvent
+      .emit({
+        type: 'PASSWORD_CHANGED',
+        title: 'Password Changed',
+        message: 'Your password has been changed successfully.',
+        userId,
+        priority: 'HIGH',
+      })
+      .catch(() => {});
+
+    this.activityEvent
+      .emitSecurityEvent(userId, 'PASSWORD_CHANGED', 'Password changed', 'Password was changed.')
+      .catch(() => {});
 
     return result;
   }
@@ -273,5 +297,4 @@ export class UsersService {
       },
     });
   }
-
 }

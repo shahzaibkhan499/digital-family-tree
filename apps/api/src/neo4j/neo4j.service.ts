@@ -1,4 +1,10 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import neo4j, { Driver, Session } from 'neo4j-driver';
 import type { SessionMode } from 'neo4j-driver';
 import { Neo4jConfig, QueryResult } from './neo4j.types';
@@ -25,17 +31,20 @@ export class Neo4jService implements OnModuleInit, OnModuleDestroy {
         this.config.uri,
         neo4j.auth.basic(this.config.username, this.config.password),
         {
-          maxConnectionPoolSize: this.config.maxConnectionPoolSize || NEO4J_DEFAULTS.maxConnectionPoolSize,
+          maxConnectionPoolSize:
+            this.config.maxConnectionPoolSize || NEO4J_DEFAULTS.maxConnectionPoolSize,
           connectionTimeout: this.config.connectionTimeout || NEO4J_DEFAULTS.connectionTimeout,
-        }
+        },
       );
       await this.driver.verifyConnectivity();
       this.connected = true;
       this.logger.log('Neo4j connected successfully');
     } catch (error) {
       this.connected = false;
-      this.logger.warn('Neo4j not available - running without graph database. ' +
-        'Set NEO4J_URI, NEO4J_USERNAME, and NEO4J_PASSWORD in .env to enable graph features.');
+      this.logger.warn(
+        'Neo4j not available - running without graph database. ' +
+          'Set NEO4J_URI, NEO4J_USERNAME, and NEO4J_PASSWORD in .env to enable graph features.',
+      );
     }
   }
 
@@ -59,14 +68,16 @@ export class Neo4jService implements OnModuleInit, OnModuleDestroy {
 
   async run(query: string, params?: Record<string, any>): Promise<QueryResult> {
     if (!this.driver || !this.connected) {
-      return { records: [], summary: { query, parameters: params || {}, counters: {}, time: 0 } };
+      throw new ServiceUnavailableException(
+        'Neo4j graph database is not available. Set NEO4J_URI, NEO4J_USERNAME, and NEO4J_PASSWORD in .env to enable graph features.',
+      );
     }
     const session = this.getSession(neo4j.session.WRITE);
     const start = Date.now();
     try {
       const result = await session.run(query, params);
       return {
-        records: result.records.map(r => r.toObject()),
+        records: result.records.map((r) => r.toObject()),
         summary: {
           query,
           parameters: params || {},
@@ -81,14 +92,16 @@ export class Neo4jService implements OnModuleInit, OnModuleDestroy {
 
   async readQuery(query: string, params?: Record<string, any>): Promise<QueryResult> {
     if (!this.driver || !this.connected) {
-      return { records: [], summary: { query, parameters: params || {}, counters: {}, time: 0 } };
+      throw new ServiceUnavailableException(
+        'Neo4j graph database is not available. Set NEO4J_URI, NEO4J_USERNAME, and NEO4J_PASSWORD in .env to enable graph features.',
+      );
     }
     const session = this.getSession(neo4j.session.READ);
     const start = Date.now();
     try {
       const result = await session.run(query, params);
       return {
-        records: result.records.map(r => r.toObject()),
+        records: result.records.map((r) => r.toObject()),
         summary: {
           query,
           parameters: params || {},

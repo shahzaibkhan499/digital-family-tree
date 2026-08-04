@@ -4,7 +4,6 @@ import { FeaturesSection } from './sections/features';
 import { HowItWorksSection } from './sections/how-it-works';
 import { WhyChooseUsSection } from './sections/why-choose-us';
 import { TechnologySection } from './sections/technology';
-import { RoadmapSection } from './sections/roadmap';
 import { FAQSection } from './sections/faq';
 import { FooterSection } from './sections/footer-section';
 
@@ -16,9 +15,8 @@ export default function HomePage() {
         <HeroSection />
         <FeaturesSection />
         <HowItWorksSection />
-        <WhyChooseUsSection />
         <TechnologySection />
-        <RoadmapSection />
+        <WhyChooseUsSection />
         <FAQSection />
       </main>
       <FooterSection />

@@ -8,22 +8,34 @@ export const marriageQueries = {
       query: `
         MATCH (p1:Person {id: $person1Id})
         MATCH (p2:Person {id: $person2Id})
-        CREATE (p1)-[r:MARRIED_TO {
-          status: $status,
-          marriageDate: $marriageDate,
-          location: $location,
-          isCommonLaw: $isCommonLaw,
-          createdAt: $createdAt,
-          updatedAt: $updatedAt
-        }]->(p2)
-        CREATE (p2)-[r2:MARRIED_TO {
-          status: $status,
-          marriageDate: $marriageDate,
-          location: $location,
-          isCommonLaw: $isCommonLaw,
-          createdAt: $createdAt,
-          updatedAt: $updatedAt
-        }]->(p1)
+        MERGE (p1)-[r:MARRIED_TO]->(p2)
+        ON CREATE SET
+          r.status = $status,
+          r.marriageDate = $marriageDate,
+          r.location = $location,
+          r.isCommonLaw = $isCommonLaw,
+          r.createdAt = $createdAt,
+          r.updatedAt = $updatedAt
+        ON MATCH SET
+          r.status = $status,
+          r.marriageDate = $marriageDate,
+          r.location = $location,
+          r.isCommonLaw = $isCommonLaw,
+          r.updatedAt = $updatedAt
+        MERGE (p2)-[r2:MARRIED_TO]->(p1)
+        ON CREATE SET
+          r2.status = $status,
+          r2.marriageDate = $marriageDate,
+          r2.location = $location,
+          r2.isCommonLaw = $isCommonLaw,
+          r2.createdAt = $createdAt,
+          r2.updatedAt = $updatedAt
+        ON MATCH SET
+          r2.status = $status,
+          r2.marriageDate = $marriageDate,
+          r2.location = $location,
+          r2.isCommonLaw = $isCommonLaw,
+          r2.updatedAt = $updatedAt
         RETURN r
       `,
       params: {
@@ -104,14 +116,14 @@ export const marriageQueries = {
       query: `
         MATCH (p1:Person {id: $person1Id})
         MATCH (p2:Person {id: $person2Id})
-        CREATE (p1)-[r:DIVORCED_FROM {
-          date: $date,
-          createdAt: $createdAt
-        }]->(p2)
-        CREATE (p2)-[r2:DIVORCED_FROM {
-          date: $date,
-          createdAt: $createdAt
-        }]->(p1)
+        MERGE (p1)-[r:DIVORCED_FROM]->(p2)
+        ON CREATE SET
+          r.date = $date,
+          r.createdAt = $createdAt
+        MERGE (p2)-[r2:DIVORCED_FROM]->(p1)
+        ON CREATE SET
+          r2.date = $date,
+          r2.createdAt = $createdAt
         RETURN r
       `,
       params: {

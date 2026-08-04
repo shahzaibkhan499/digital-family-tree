@@ -19,103 +19,89 @@ export class EventInvitationsService {
 
     if (scope === 'INDIVIDUAL' && dto.userIds?.length) {
       userIdsToInvite = dto.userIds;
-    } else if (scope === 'FAMILY' && dto.familyIds?.length) {
-      for (const familyId of dto.familyIds) {
-        const family = await this.prisma.family.findUnique({
-          where: { id: familyId },
-          select: { ownerId: true, members: { select: { email: true } } },
-        });
-        if (family) {
-          userIdsToInvite.push(family.ownerId);
-        }
-      }
+    } else if ((scope === 'FAMILY' || scope === 'MULTIPLE_FAMILIES') && dto.familyIds?.length) {
+      const families = await this.prisma.family.findMany({
+        where: { id: { in: dto.familyIds } },
+        select: { ownerId: true },
+      });
+      userIdsToInvite = families.map((f) => f.ownerId);
       const familyMembers = await this.prisma.familyMember.findMany({
         where: { familyId: { in: dto.familyIds } },
         select: { email: true },
       });
-      const memberEmails = familyMembers.map(m => m.email).filter(Boolean) as string[];
+      const memberEmails = [
+        ...new Set(familyMembers.map((m) => m.email).filter(Boolean) as string[]),
+      ];
       if (memberEmails.length > 0) {
         const memberUsers = await this.prisma.user.findMany({
           where: { email: { in: memberEmails } },
           select: { id: true },
         });
-        userIdsToInvite.push(...memberUsers.map(u => u.id));
-      }
-    } else if (scope === 'MULTIPLE_FAMILIES' && dto.familyIds?.length) {
-      for (const familyId of dto.familyIds) {
-        const family = await this.prisma.family.findUnique({
-          where: { id: familyId },
-          select: { ownerId: true },
-        });
-        if (family) {
-          userIdsToInvite.push(family.ownerId);
-        }
-      }
-      const familyMembers = await this.prisma.familyMember.findMany({
-        where: { familyId: { in: dto.familyIds } },
-        select: { email: true },
-      });
-      const memberEmails = familyMembers.map(m => m.email).filter(Boolean) as string[];
-      if (memberEmails.length > 0) {
-        const memberUsers = await this.prisma.user.findMany({
-          where: { email: { in: memberEmails } },
-          select: { id: true },
-        });
-        userIdsToInvite.push(...memberUsers.map(u => u.id));
+        userIdsToInvite.push(...memberUsers.map((u) => u.id));
       }
     } else if (scope === 'SUB_CLAN' && dto.subClanId) {
       const families = await this.prisma.family.findMany({
         where: { subClanId: dto.subClanId },
         select: { ownerId: true },
       });
-      userIdsToInvite = families.map(f => f.ownerId);
+      userIdsToInvite = families.map((f) => f.ownerId);
     } else if (scope === 'CLAN' && dto.clanId) {
       const families = await this.prisma.family.findMany({
         where: { clanId: dto.clanId },
         select: { ownerId: true },
       });
-      userIdsToInvite = families.map(f => f.ownerId);
+      userIdsToInvite = families.map((f) => f.ownerId);
     } else if (scope === 'COMMUNITY' && dto.communityId) {
       const clans = await this.prisma.clan.findMany({
         where: { communityId: dto.communityId },
         select: { id: true },
       });
-      const clanIds = clans.map(c => c.id);
+      const clanIds = clans.map((c) => c.id);
       const families = await this.prisma.family.findMany({
         where: { clanId: { in: clanIds } },
         select: { ownerId: true },
       });
-      userIdsToInvite = families.map(f => f.ownerId);
+      userIdsToInvite = families.map((f) => f.ownerId);
     }
 
-    userIdsToInvite = [...new Set(userIdsToInvite)].filter(id => id !== userId);
+    userIdsToInvite = [...new Set(userIdsToInvite)].filter((id) => id !== userId);
 
-    const displayIds = await Promise.all(
-      userIdsToInvite.map(() => this.identityService.generateEventInvitationId()),
-    );
+    if (userIdsToInvite.length === 0) {
+      return { invitations: [], total: 0, scope };
+    }
 
-    const invitations = [];
-    for (let i = 0; i < userIdsToInvite.length; i++) {
-      const existing = await this.prisma.eventInvitation.findUnique({
-        where: { eventId_userId: { eventId: dto.eventId, userId: userIdsToInvite[i] } },
+    const existingInvites = await this.prisma.eventInvitation.findMany({
+      where: { eventId: dto.eventId, userId: { in: userIdsToInvite } },
+      select: { userId: true },
+    });
+    const existingUserIds = new Set(existingInvites.map((i) => i.userId));
+    const newUserIds = userIdsToInvite.filter((id) => !existingUserIds.has(id));
+
+    let invitations: any[] = [];
+    if (newUserIds.length > 0) {
+      const displayIds = await Promise.all(
+        newUserIds.map(() => this.identityService.generateEventInvitationId()),
+      );
+      const data = newUserIds.map((uid, i) => ({
+        displayId: displayIds[i],
+        eventId: dto.eventId,
+        userId: uid,
+        invitedById: userId,
+        scope,
+        message: dto.message || null,
+      }));
+
+      await this.prisma.$transaction((tx) =>
+        tx.eventInvitation.createMany({ data, skipDuplicates: true }),
+      );
+
+      invitations = await this.prisma.eventInvitation.findMany({
+        where: { eventId: dto.eventId, userId: { in: newUserIds } },
+        include: {
+          user: { select: { id: true, name: true, avatar: true } },
+          invitedBy: { select: { id: true, name: true, avatar: true } },
+        },
       });
-      if (!existing) {
-        const invitation = await this.prisma.eventInvitation.create({
-          data: {
-            displayId: displayIds[i],
-            eventId: dto.eventId,
-            userId: userIdsToInvite[i],
-            invitedById: userId,
-            scope,
-            message: dto.message || null,
-          },
-          include: {
-            user: { select: { id: true, name: true, avatar: true } },
-            invitedBy: { select: { id: true, name: true, avatar: true } },
-          },
-        });
-        invitations.push(invitation);
-      }
     }
 
     return { invitations, total: invitations.length, scope };
@@ -139,7 +125,8 @@ export class EventInvitationsService {
       where: { id: invitationId },
     });
     if (!invitation) throw new NotFoundException('Invitation not found');
-    if (invitation.userId !== userId) throw new ForbiddenException('You can only respond to your own invitations');
+    if (invitation.userId !== userId)
+      throw new ForbiddenException('You can only respond to your own invitations');
 
     return this.prisma.eventInvitation.update({
       where: { id: invitationId },
@@ -177,19 +164,23 @@ export class EventInvitationsService {
   }
 
   async getInvitationStats(eventId: string) {
-    const invitations = await this.prisma.eventInvitation.findMany({
+    const grouped = await this.prisma.eventInvitation.groupBy({
+      by: ['status'],
       where: { eventId },
-      select: { status: true },
+      _count: { status: true },
     });
 
-    const stats = {
-      total: invitations.length,
-      accepted: invitations.filter(i => i.status === 'ACCEPTED').length,
-      declined: invitations.filter(i => i.status === 'DECLINED').length,
-      maybe: invitations.filter(i => i.status === 'MAYBE').length,
-      pending: invitations.filter(i => i.status === 'PENDING').length,
-    };
+    const counts: Record<string, number> = { ACCEPTED: 0, DECLINED: 0, MAYBE: 0, PENDING: 0 };
+    for (const g of grouped) {
+      counts[g.status] = g._count.status;
+    }
 
-    return stats;
+    return {
+      total: grouped.reduce((sum, g) => sum + g._count.status, 0),
+      accepted: counts.ACCEPTED,
+      declined: counts.DECLINED,
+      maybe: counts.MAYBE,
+      pending: counts.PENDING,
+    };
   }
 }

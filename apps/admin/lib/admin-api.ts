@@ -1,4 +1,3 @@
-const ADMIN_KEY = process.env.NEXT_PUBLIC_ADMIN_API_KEY || 'dft-admin-secret-key-2024';
 const API_BASE = '/api/nest';
 
 export async function adminFetch<T = Record<string, unknown>>(
@@ -9,7 +8,6 @@ export async function adminFetch<T = Record<string, unknown>>(
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      'X-Admin-Key': ADMIN_KEY,
       ...options.headers,
     },
   });

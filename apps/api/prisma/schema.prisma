@@ -68,6 +68,8 @@ model User {
   twoFactorSecret            String?
   failedLoginAttempts        Int                      @default(0)
   lockedUntil                DateTime?
+  resetTokenHash             String?
+  resetTokenExpiresAt        DateTime?
   theme                      String?                  @default("system")
   activities                 Activity[]
   activityComments           ActivityComment[]

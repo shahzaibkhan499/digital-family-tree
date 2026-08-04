@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import * as path from 'path';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { HealthModule } from './health/health.module';
@@ -55,14 +56,17 @@ import { Neo4jModule } from './neo4j/neo4j.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: [path.join(__dirname, '..', '.env'), path.join(__dirname, '..', '..', '.env')],
     }),
     // Rate limiting: 100 requests per 60-second window per IP address.
     // Global ThrottlerGuard applied via APP_GUARD below.
     // Individual routes can override with @SkipThrottle() or @Throttle() decorators.
-    ThrottlerModule.forRoot([{
-      ttl: 60000, // 1 minute window
-      limit: 100,  // max 100 requests per window
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minute window
+        limit: 100, // max 100 requests per window
+      },
+    ]),
     PrismaModule,
     CommonModule,
     CloudinaryModule,

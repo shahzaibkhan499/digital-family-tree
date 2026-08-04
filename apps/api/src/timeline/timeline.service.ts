@@ -1,9 +1,18 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { IdentityService } from '../common/identity.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PermissionsService } from '../common/permissions.service';
-import { CreateTimelineEventDto, UpdateTimelineEventDto, RsvpDto } from './dto/create-timeline-event.dto';
+import {
+  CreateTimelineEventDto,
+  UpdateTimelineEventDto,
+  RsvpDto,
+} from './dto/create-timeline-event.dto';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -74,7 +83,7 @@ export class TimelineService {
 
     if (dto.participantIds && dto.participantIds.length > 0) {
       await this.prisma.eventParticipant.createMany({
-        data: dto.participantIds.map(pid => ({
+        data: dto.participantIds.map((pid) => ({
           eventId: event.id,
           userId: pid,
           rsvpStatus: 'PENDING',
@@ -112,7 +121,7 @@ export class TimelineService {
       const creatorId = dto.createdById || userId;
       if (creatorId) {
         const reminderData = reminderOffsets
-          .filter(r => {
+          .filter((r) => {
             if (r.days === 0) {
               const twoHoursBefore = new Date(eventDate.getTime() - 2 * 60 * 60 * 1000);
               return twoHoursBefore.getTime() > Date.now();
@@ -120,10 +129,11 @@ export class TimelineService {
             const reminderDate = new Date(eventDate.getTime() - r.days * 24 * 60 * 60 * 1000);
             return reminderDate.getTime() > Date.now();
           })
-          .map(r => {
-            const scheduledAt = r.days === 0
-              ? new Date(eventDate.getTime() - 2 * 60 * 60 * 1000)
-              : new Date(eventDate.getTime() - r.days * 24 * 60 * 60 * 1000);
+          .map((r) => {
+            const scheduledAt =
+              r.days === 0
+                ? new Date(eventDate.getTime() - 2 * 60 * 60 * 1000)
+                : new Date(eventDate.getTime() - r.days * 24 * 60 * 60 * 1000);
             return {
               eventId: event.id,
               userId: creatorId,
@@ -140,29 +150,52 @@ export class TimelineService {
 
     await this.generateSearchTags(event.id, { ...dto, event });
     await this.autoGenerateTags(event);
-    await this.createActivity(event.id, 'EVENT_CREATED', `Event "${event.title}" was created`, userId);
+    await this.createActivity(
+      event.id,
+      'EVENT_CREATED',
+      `Event "${event.title}" was created`,
+      userId,
+    );
 
     return event;
   }
 
-  async findAll(options: {
-    page?: number;
-    limit?: number;
-    familyId?: string;
-    memberId?: string;
-    eventType?: string;
-    dateFrom?: string;
-    dateTo?: string;
-    search?: string;
-    status?: string;
-    venue?: string;
-    color?: string;
-    createdById?: string;
-    userId?: string;
-    visibility?: string;
-    cursor?: string;
-  } = {}) {
-    const { page = 1, limit = 50, familyId, memberId, eventType, dateFrom, dateTo, search, status, venue, color, createdById, userId, visibility, cursor } = options;
+  async findAll(
+    options: {
+      page?: number;
+      limit?: number;
+      familyId?: string;
+      memberId?: string;
+      eventType?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      search?: string;
+      status?: string;
+      venue?: string;
+      color?: string;
+      createdById?: string;
+      userId?: string;
+      visibility?: string;
+      cursor?: string;
+    } = {},
+  ) {
+    const {
+      page = 1,
+      limit = 50,
+      familyId,
+      memberId,
+      eventType,
+      dateFrom,
+      dateTo,
+      search,
+      status,
+      venue,
+      color,
+      createdById,
+      userId,
+      visibility,
+      cursor,
+    } = options;
 
     const filters: Record<string, unknown> = {};
     filters.deletedAt = null;
@@ -185,24 +218,29 @@ export class TimelineService {
     const andConditions: any[] = [filters];
 
     if (userId) {
-      const [visibleFamilyIds, visibleSubClanIds, visibleClanIds, visibleCommunityIds] = await Promise.all([
-        this.permissionsService.getVisibleFamilyIds(userId),
-        this.permissionsService.getVisibleSubClanIds(userId),
-        this.permissionsService.getVisibleClanIds(userId),
-        this.permissionsService.getVisibleCommunityIds(userId),
-      ]);
-
-      if (!familyId && !memberId && visibleFamilyIds.length === 0 && visibleSubClanIds.length === 0 && visibleClanIds.length === 0 && visibleCommunityIds.length === 0) {
-        return { events: [], total: 0, page, limit, totalPages: 0, hasMore: false, nextCursor: null };
-      }
+      const [visibleFamilyIds, visibleSubClanIds, visibleClanIds, visibleCommunityIds] =
+        await Promise.all([
+          this.permissionsService.getVisibleFamilyIds(userId),
+          this.permissionsService.getVisibleSubClanIds(userId),
+          this.permissionsService.getVisibleClanIds(userId),
+          this.permissionsService.getVisibleCommunityIds(userId),
+        ]);
 
       const visibilityConditions: any[] = [
         { visibility: 'PUBLIC' },
         { visibility: 'ONLY_ME', createdById: userId },
-        { visibility: 'FAMILY', familyId: { in: visibleFamilyIds } },
-        { visibility: 'SUB_CLAN', subClanId: { in: visibleSubClanIds } },
-        { visibility: 'CLAN', clanId: { in: visibleClanIds } },
-        { visibility: 'COMMUNITY', communityId: { in: visibleCommunityIds } },
+        ...(visibleFamilyIds.length > 0
+          ? [{ visibility: 'FAMILY', familyId: { in: visibleFamilyIds } }]
+          : []),
+        ...(visibleSubClanIds.length > 0
+          ? [{ visibility: 'SUB_CLAN', subClanId: { in: visibleSubClanIds } }]
+          : []),
+        ...(visibleClanIds.length > 0
+          ? [{ visibility: 'CLAN', clanId: { in: visibleClanIds } }]
+          : []),
+        ...(visibleCommunityIds.length > 0
+          ? [{ visibility: 'COMMUNITY', communityId: { in: visibleCommunityIds } }]
+          : []),
       ];
       andConditions.push({ OR: visibilityConditions });
     }
@@ -277,7 +315,7 @@ export class TimelineService {
       limit,
       totalPages: Math.ceil(total / limit),
       hasMore,
-      nextCursor: hasMore ? sortedEvents[sortedEvents.length - 1]?.id ?? null : null,
+      nextCursor: hasMore ? (sortedEvents[sortedEvents.length - 1]?.id ?? null) : null,
     };
   }
 
@@ -304,34 +342,59 @@ export class TimelineService {
     return event;
   }
 
-  async findByFamily(familyId: string, options: {
-    page?: number;
-    limit?: number;
-    eventType?: string;
-    status?: string;
-    venue?: string;
-    color?: string;
-    createdById?: string;
-    dateFrom?: string;
-    dateTo?: string;
-    search?: string;
-    userId?: string;
-  } = {}) {
+  async findByFamily(
+    familyId: string,
+    options: {
+      page?: number;
+      limit?: number;
+      eventType?: string;
+      status?: string;
+      venue?: string;
+      color?: string;
+      createdById?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      search?: string;
+      userId?: string;
+    } = {},
+  ) {
     if (options.userId) {
       const visibleFamilyIds = await this.permissionsService.getVisibleFamilyIds(options.userId);
       if (!visibleFamilyIds.includes(familyId)) {
-        return { events: [], total: 0, page: options.page || 1, limit: options.limit || 50, totalPages: 0, hasMore: false, nextCursor: null };
+        return {
+          events: [],
+          total: 0,
+          page: options.page || 1,
+          limit: options.limit || 50,
+          totalPages: 0,
+          hasMore: false,
+          nextCursor: null,
+        };
       }
     }
     return this.findAll({ ...options, familyId });
   }
 
-  async findByMember(memberId: string, options: { page?: number; limit?: number; userId?: string } = {}) {
+  async findByMember(
+    memberId: string,
+    options: { page?: number; limit?: number; userId?: string } = {},
+  ) {
     if (options.userId) {
       const visibleFamilyIds = await this.permissionsService.getVisibleFamilyIds(options.userId);
-      const member = await this.prisma.familyMember.findUnique({ where: { id: memberId }, select: { familyId: true } });
+      const member = await this.prisma.familyMember.findUnique({
+        where: { id: memberId },
+        select: { familyId: true },
+      });
       if (!member || !visibleFamilyIds.includes(member.familyId)) {
-        return { events: [], total: 0, page: options.page || 1, limit: options.limit || 50, totalPages: 0, hasMore: false, nextCursor: null };
+        return {
+          events: [],
+          total: 0,
+          page: options.page || 1,
+          limit: options.limit || 50,
+          totalPages: 0,
+          hasMore: false,
+          nextCursor: null,
+        };
       }
     }
     return this.findAll({ ...options, memberId });
@@ -344,7 +407,8 @@ export class TimelineService {
     const isCreator = event.createdById === userId;
     if (!isCreator) {
       const family = await this.prisma.family.findUnique({ where: { id: event.familyId } });
-      if (!family || family.ownerId !== userId) throw new ForbiddenException('You can only edit your own events');
+      if (!family || family.ownerId !== userId)
+        throw new ForbiddenException('You can only edit your own events');
     }
 
     const updateData: Record<string, unknown> = {};
@@ -375,16 +439,20 @@ export class TimelineService {
     if (dto.pinned !== undefined) updateData.pinned = dto.pinned;
     if (dto.featured !== undefined) updateData.featured = dto.featured;
     if (dto.archived !== undefined) updateData.archived = dto.archived;
-    if (dto.cancellationReason !== undefined) updateData.cancellationReason = dto.cancellationReason || null;
+    if (dto.cancellationReason !== undefined)
+      updateData.cancellationReason = dto.cancellationReason || null;
     if (dto.recurrence !== undefined) updateData.recurrence = dto.recurrence || null;
     if (dto.recurrenceRule !== undefined) updateData.recurrenceRule = dto.recurrenceRule || null;
     if (dto.maxAttendees !== undefined) updateData.maxAttendees = dto.maxAttendees || null;
-    if (dto.rsvpDeadline !== undefined) updateData.rsvpDeadline = dto.rsvpDeadline ? new Date(dto.rsvpDeadline) : null;
+    if (dto.rsvpDeadline !== undefined)
+      updateData.rsvpDeadline = dto.rsvpDeadline ? new Date(dto.rsvpDeadline) : null;
     if (dto.tags !== undefined && dto.tags !== null) updateData.tags = dto.tags;
     if (dto.keywords !== undefined && dto.keywords !== null) updateData.keywords = dto.keywords;
-    if (dto.notificationChannels !== undefined) updateData.notificationChannels = dto.notificationChannels;
+    if (dto.notificationChannels !== undefined)
+      updateData.notificationChannels = dto.notificationChannels;
     if (dto.hideFromPublic !== undefined) updateData.hideFromPublic = dto.hideFromPublic;
-    if (dto.restrictScreenshots !== undefined) updateData.restrictScreenshots = dto.restrictScreenshots;
+    if (dto.restrictScreenshots !== undefined)
+      updateData.restrictScreenshots = dto.restrictScreenshots;
 
     await this.buildUpdateHistory(event, updateData, userId);
 
@@ -409,7 +477,7 @@ export class TimelineService {
 
     if (dto.addParticipantIds && dto.addParticipantIds.length > 0) {
       await this.prisma.eventParticipant.createMany({
-        data: dto.addParticipantIds.map(pid => ({
+        data: dto.addParticipantIds.map((pid) => ({
           eventId: id,
           userId: pid,
           rsvpStatus: 'PENDING',
@@ -444,7 +512,12 @@ export class TimelineService {
       });
     }
 
-    await this.createActivity(id, 'EVENT_UPDATED', `Event "${updatedEvent.title}" was updated`, userId);
+    await this.createActivity(
+      id,
+      'EVENT_UPDATED',
+      `Event "${updatedEvent.title}" was updated`,
+      userId,
+    );
     return this.findOne(id, userId);
   }
 
@@ -456,7 +529,8 @@ export class TimelineService {
       const isCreator = event.createdById === userId;
       if (!isCreator) {
         const family = await this.prisma.family.findUnique({ where: { id: event.familyId } });
-        if (!family || family.ownerId !== userId) throw new ForbiddenException('You can only delete your own events');
+        if (!family || family.ownerId !== userId)
+          throw new ForbiddenException('You can only delete your own events');
       }
     }
 
@@ -476,7 +550,12 @@ export class TimelineService {
     const visibleClanIds = await this.permissionsService.getVisibleClanIds(userId);
     const visibleCommunityIds = await this.permissionsService.getVisibleCommunityIds(userId);
 
-    if (visibleFamilyIds.length === 0 && visibleSubClanIds.length === 0 && visibleClanIds.length === 0 && visibleCommunityIds.length === 0) {
+    if (
+      visibleFamilyIds.length === 0 &&
+      visibleSubClanIds.length === 0 &&
+      visibleClanIds.length === 0 &&
+      visibleCommunityIds.length === 0
+    ) {
       return [];
     }
 
@@ -500,7 +579,7 @@ export class TimelineService {
       },
     });
 
-    const eventsWithCountdown = events.map(event => ({
+    const eventsWithCountdown = events.map((event) => ({
       ...event,
       countdown: this.getDaysLeft(event.date),
     }));
@@ -513,7 +592,7 @@ export class TimelineService {
       where: { ownerId: userId },
       select: { id: true },
     });
-    const familyIds = families.map(f => f.id);
+    const familyIds = families.map((f) => f.id);
 
     if (familyIds.length === 0) return {};
 
@@ -548,7 +627,7 @@ export class TimelineService {
       where: { ownerId: userId },
       select: { id: true },
     });
-    const familyIds = families.map(f => f.id);
+    const familyIds = families.map((f) => f.id);
 
     if (familyIds.length === 0) return [];
 
@@ -575,7 +654,7 @@ export class TimelineService {
       where: { ownerId: userId },
       select: { id: true },
     });
-    const familyIds = families.map(f => f.id);
+    const familyIds = families.map((f) => f.id);
 
     if (familyIds.length === 0) return [];
 
@@ -634,15 +713,33 @@ export class TimelineService {
       orderBy: { createdAt: 'asc' },
     });
 
+    const attendance = await this.prisma.eventAttendance.findMany({
+      where: { eventId, checkedInAt: { not: null } },
+      select: { userId: true, checkedInAt: true, checkedOutAt: true, method: true },
+    });
+    const attendanceByUser = new Map(attendance.map((a) => [a.userId, a]));
+
+    const enriched = participants.map((p) => {
+      const a = attendanceByUser.get(p.userId);
+      return {
+        ...p,
+        checkedIn: !!(a && !a.checkedOutAt),
+        checkedInAt: a?.checkedInAt ?? null,
+        checkedOutAt: a?.checkedOutAt ?? null,
+        attendanceMethod: a?.method ?? null,
+      };
+    });
+
     const counts = {
-      accepted: participants.filter(p => p.rsvpStatus === 'ACCEPTED').length,
-      maybe: participants.filter(p => p.rsvpStatus === 'MAYBE').length,
-      declined: participants.filter(p => p.rsvpStatus === 'DECLINED').length,
-      pending: participants.filter(p => p.rsvpStatus === 'PENDING').length,
+      accepted: participants.filter((p) => p.rsvpStatus === 'ACCEPTED').length,
+      maybe: participants.filter((p) => p.rsvpStatus === 'MAYBE').length,
+      declined: participants.filter((p) => p.rsvpStatus === 'DECLINED').length,
+      pending: participants.filter((p) => p.rsvpStatus === 'PENDING').length,
       total: participants.length,
+      checkedIn: enriched.filter((p) => p.checkedIn).length,
     };
 
-    return { participants, counts };
+    return { participants: enriched, counts, stats: counts };
   }
 
   async getEventStats() {
@@ -651,33 +748,35 @@ export class TimelineService {
     const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
-    const [total, byStatus, byEventType, upcomingCount, todayCount, monthCount] = await Promise.all([
-      this.prisma.timelineEvent.count(),
-      this.prisma.timelineEvent.groupBy({
-        by: ['status'],
-        _count: { id: true },
-        orderBy: { _count: { id: 'desc' } },
-      }),
-      this.prisma.timelineEvent.groupBy({
-        by: ['eventType'],
-        _count: { id: true },
-        orderBy: { _count: { id: 'desc' } },
-      }),
-      this.prisma.timelineEvent.count({
-        where: { date: { gte: now }, status: { notIn: ['CANCELLED', 'ARCHIVED'] } },
-      }),
-      this.prisma.timelineEvent.count({
-        where: { date: { gte: startOfToday, lte: endOfToday } },
-      }),
-      this.prisma.timelineEvent.count({
-        where: { date: { gte: startOfToday, lte: endOfMonth } },
-      }),
-    ]);
+    const [total, byStatus, byEventType, upcomingCount, todayCount, monthCount] = await Promise.all(
+      [
+        this.prisma.timelineEvent.count(),
+        this.prisma.timelineEvent.groupBy({
+          by: ['status'],
+          _count: { id: true },
+          orderBy: { _count: { id: 'desc' } },
+        }),
+        this.prisma.timelineEvent.groupBy({
+          by: ['eventType'],
+          _count: { id: true },
+          orderBy: { _count: { id: 'desc' } },
+        }),
+        this.prisma.timelineEvent.count({
+          where: { date: { gte: now }, status: { notIn: ['CANCELLED', 'ARCHIVED'] } },
+        }),
+        this.prisma.timelineEvent.count({
+          where: { date: { gte: startOfToday, lte: endOfToday } },
+        }),
+        this.prisma.timelineEvent.count({
+          where: { date: { gte: startOfToday, lte: endOfMonth } },
+        }),
+      ],
+    );
 
     return {
       total,
-      byStatus: byStatus.map(s => ({ status: s.status, count: s._count.id })),
-      byEventType: byEventType.map(t => ({ eventType: t.eventType, count: t._count.id })),
+      byStatus: byStatus.map((s) => ({ status: s.status, count: s._count.id })),
+      byEventType: byEventType.map((t) => ({ eventType: t.eventType, count: t._count.id })),
       upcomingCount,
       todayCount,
       monthCount,
@@ -703,10 +802,14 @@ export class TimelineService {
     const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
     const upcomingBirthdays = members
-      .map(member => {
+      .map((member) => {
         if (!member.birthDate) return null;
         const birthDate = new Date(member.birthDate);
-        const thisYearBirthday = new Date(now.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+        const thisYearBirthday = new Date(
+          now.getFullYear(),
+          birthDate.getMonth(),
+          birthDate.getDate(),
+        );
 
         if (thisYearBirthday < startOfToday(now)) {
           thisYearBirthday.setFullYear(thisYearBirthday.getFullYear() + 1);
@@ -749,7 +852,9 @@ export class TimelineService {
       },
       include: {
         fromMember: { include: { family: { select: { id: true, name: true } } } },
-        toMember: { select: { id: true, firstName: true, lastName: true, avatar: true, birthDate: true } },
+        toMember: {
+          select: { id: true, firstName: true, lastName: true, avatar: true, birthDate: true },
+        },
       },
     });
 
@@ -757,9 +862,13 @@ export class TimelineService {
     const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
     const upcomingAnniversaries = marriages
-      .map(rel => {
+      .map((rel) => {
         const marriageDate = rel.createdAt;
-        const thisYearAnniversary = new Date(now.getFullYear(), marriageDate.getMonth(), marriageDate.getDate());
+        const thisYearAnniversary = new Date(
+          now.getFullYear(),
+          marriageDate.getMonth(),
+          marriageDate.getDate(),
+        );
 
         if (thisYearAnniversary < startOfToday(now)) {
           thisYearAnniversary.setFullYear(thisYearAnniversary.getFullYear() + 1);
@@ -774,7 +883,8 @@ export class TimelineService {
           title: `${rel.fromMember.firstName} & ${rel.toMember.firstName}'s ${years}${ordinalSuffix(years)} Anniversary`,
           date: thisYearAnniversary.toISOString(),
           eventType: 'ANNIVERSARY',
-          status: thisYearAnniversary.getTime() === startOfToday(now).getTime() ? 'TODAY' : 'UPCOMING',
+          status:
+            thisYearAnniversary.getTime() === startOfToday(now).getTime() ? 'TODAY' : 'UPCOMING',
           color: 'rose',
           isSynthetic: true,
           member: rel.fromMember,
@@ -794,7 +904,7 @@ export class TimelineService {
       where: { ownerId: userId },
       select: { id: true },
     });
-    const familyIds = families.map(f => f.id);
+    const familyIds = families.map((f) => f.id);
 
     if (familyIds.length === 0) return [];
 
@@ -811,7 +921,7 @@ export class TimelineService {
       take: 50,
     });
 
-    const eventsWithCountdown = events.map(event => ({
+    const eventsWithCountdown = events.map((event) => ({
       ...event,
       countdown: this.getDaysLeft(event.date),
       daysLeft: this.getDaysLeft(event.date).daysLeft,
@@ -892,7 +1002,7 @@ export class TimelineService {
       where: { ownerId: userId },
       select: { id: true },
     });
-    const familyIds = families.map(f => f.id);
+    const familyIds = families.map((f) => f.id);
 
     if (familyIds.length === 0) return [];
 
@@ -950,7 +1060,8 @@ export class TimelineService {
     const isCreator = event.createdById === userId;
     if (!isCreator) {
       const family = await this.prisma.family.findUnique({ where: { id: event.familyId } });
-      if (!family || family.ownerId !== userId) throw new ForbiddenException('You can only edit your own events');
+      if (!family || family.ownerId !== userId)
+        throw new ForbiddenException('You can only edit your own events');
     }
 
     const updatedTags = [...new Set([...event.tags, ...tags])];
@@ -967,10 +1078,11 @@ export class TimelineService {
     const isCreator = event.createdById === userId;
     if (!isCreator) {
       const family = await this.prisma.family.findUnique({ where: { id: event.familyId } });
-      if (!family || family.ownerId !== userId) throw new ForbiddenException('You can only edit your own events');
+      if (!family || family.ownerId !== userId)
+        throw new ForbiddenException('You can only edit your own events');
     }
 
-    const updatedTags = event.tags.filter(t => !tags.includes(t));
+    const updatedTags = event.tags.filter((t) => !tags.includes(t));
     return this.prisma.timelineEvent.update({
       where: { id: eventId },
       data: { tags: updatedTags },
@@ -984,7 +1096,8 @@ export class TimelineService {
     const isCreator = event.createdById === userId;
     if (!isCreator) {
       const family = await this.prisma.family.findUnique({ where: { id: event.familyId } });
-      if (!family || family.ownerId !== userId) throw new ForbiddenException('You can only edit your own events');
+      if (!family || family.ownerId !== userId)
+        throw new ForbiddenException('You can only edit your own events');
     }
 
     const updatedKeywords = [...new Set([...event.keywords, ...keywords])];
@@ -1001,10 +1114,11 @@ export class TimelineService {
     const isCreator = event.createdById === userId;
     if (!isCreator) {
       const family = await this.prisma.family.findUnique({ where: { id: event.familyId } });
-      if (!family || family.ownerId !== userId) throw new ForbiddenException('You can only edit your own events');
+      if (!family || family.ownerId !== userId)
+        throw new ForbiddenException('You can only edit your own events');
     }
 
-    const updatedKeywords = event.keywords.filter(k => !keywords.includes(k));
+    const updatedKeywords = event.keywords.filter((k) => !keywords.includes(k));
     return this.prisma.timelineEvent.update({
       where: { id: eventId },
       data: { keywords: updatedKeywords },
@@ -1021,7 +1135,8 @@ export class TimelineService {
     const isCreator = event.createdById === userId;
     if (!isCreator) {
       const family = await this.prisma.family.findUnique({ where: { id: event.familyId } });
-      if (!family || family.ownerId !== userId) throw new ForbiddenException('You can only delete reminders for your own events');
+      if (!family || family.ownerId !== userId)
+        throw new ForbiddenException('You can only delete reminders for your own events');
     }
 
     await this.prisma.eventReminder.delete({ where: { id: reminderId } });
@@ -1033,7 +1148,8 @@ export class TimelineService {
     if (!event) throw new NotFoundException('Timeline event not found');
 
     const family = await this.prisma.family.findUnique({ where: { id: event.familyId } });
-    if (!family || family.ownerId !== userId) throw new ForbiddenException('You do not have access');
+    if (!family || family.ownerId !== userId)
+      throw new ForbiddenException('You do not have access');
 
     return this.prisma.timelineEvent.update({
       where: { id },
@@ -1050,7 +1166,8 @@ export class TimelineService {
     if (!event) throw new NotFoundException('Timeline event not found');
 
     const family = await this.prisma.family.findUnique({ where: { id: event.familyId } });
-    if (!family || family.ownerId !== userId) throw new ForbiddenException('You do not have access');
+    if (!family || family.ownerId !== userId)
+      throw new ForbiddenException('You do not have access');
 
     return this.prisma.timelineEvent.update({
       where: { id },
@@ -1074,7 +1191,11 @@ export class TimelineService {
       orderBy: { _count: { id: 'desc' } },
     });
 
-    return { total, autoCount, byEventType: byEventType.map(t => ({ eventType: t.eventType, count: t._count.id })) };
+    return {
+      total,
+      autoCount,
+      byEventType: byEventType.map((t) => ({ eventType: t.eventType, count: t._count.id })),
+    };
   }
 
   private getDaysLeft(date: Date | null): { daysLeft: number; label: string; priority: number } {
@@ -1095,16 +1216,29 @@ export class TimelineService {
     return events.sort((a, b) => {
       const aInfo = this.getDaysLeft(a.date);
       const bInfo = this.getDaysLeft(b.date);
-      return aInfo.priority - bInfo.priority || (new Date(a.date || 0).getTime()) - (new Date(b.date || 0).getTime());
+      return (
+        aInfo.priority - bInfo.priority ||
+        new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime()
+      );
     });
   }
 
   private getEventColor(eventType: string): string {
     const colors: Record<string, string> = {
-      BIRTH: 'green', MARRIAGE: 'pink', DEATH: 'gray', GRADUATION: 'blue',
-      ANNIVERSARY: 'rose', MOVE: 'orange', EDUCATION: 'blue', CAREER: 'purple',
-      AWARD: 'amber', MILITARY_SERVICE: 'green', IMMIGRATION: 'cyan',
-      FAMILY_REUNION: 'emerald', FAMILY_CREATED: 'emerald', CUSTOM_EVENT: 'blue',
+      BIRTH: 'green',
+      MARRIAGE: 'pink',
+      DEATH: 'gray',
+      GRADUATION: 'blue',
+      ANNIVERSARY: 'rose',
+      MOVE: 'orange',
+      EDUCATION: 'blue',
+      CAREER: 'purple',
+      AWARD: 'amber',
+      MILITARY_SERVICE: 'green',
+      IMMIGRATION: 'cyan',
+      FAMILY_REUNION: 'emerald',
+      FAMILY_CREATED: 'emerald',
+      CUSTOM_EVENT: 'blue',
     };
     return colors[eventType] || 'slate';
   }
@@ -1124,7 +1258,10 @@ export class TimelineService {
 
     if (data.title) tagSet.add(data.title.toLowerCase());
     if (data.description) {
-      data.description.split(/\s+/).slice(0, 10).forEach((w: string) => tagSet.add(w.toLowerCase()));
+      data.description
+        .split(/\s+/)
+        .slice(0, 10)
+        .forEach((w: string) => tagSet.add(w.toLowerCase()));
     }
     if (data.location) tagSet.add(data.location.toLowerCase());
     if (data.venue) tagSet.add(data.venue.toLowerCase());
@@ -1133,10 +1270,10 @@ export class TimelineService {
       data.tags.forEach((t: string) => tagSet.add(t.toLowerCase()));
     }
 
-    const tags = Array.from(tagSet).filter(t => t.length > 1);
+    const tags = Array.from(tagSet).filter((t) => t.length > 1);
     if (tags.length > 0) {
       await this.prisma.eventSearchTag.createMany({
-        data: tags.map(tag => ({
+        data: tags.map((tag) => ({
           eventId,
           tag,
           category: tag === data.eventType?.toLowerCase() ? 'event_type' : 'general',
@@ -1146,7 +1283,13 @@ export class TimelineService {
     }
   }
 
-  private async createActivity(eventId: string, action: string, description: string, userId?: string, metadata?: Record<string, unknown>): Promise<void> {
+  private async createActivity(
+    eventId: string,
+    action: string,
+    description: string,
+    userId?: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<void> {
     const displayId = await this.identityService.generateId('EVA');
     await this.prisma.eventActivity.create({
       data: {
@@ -1160,7 +1303,14 @@ export class TimelineService {
     });
   }
 
-  private async createHistory(eventId: string, userId: string, action: string, field?: string, oldValue?: string, newValue?: string): Promise<void> {
+  private async createHistory(
+    eventId: string,
+    userId: string,
+    action: string,
+    field?: string,
+    oldValue?: string,
+    newValue?: string,
+  ): Promise<void> {
     const displayId = await this.identityService.generateId('EVH');
     await this.prisma.eventHistory.create({
       data: {
@@ -1175,12 +1325,39 @@ export class TimelineService {
     });
   }
 
-  private buildUpdateHistory(oldEvent: any, updateData: Record<string, unknown>, userId: string): Promise<void[]> {
+  private buildUpdateHistory(
+    oldEvent: any,
+    updateData: Record<string, unknown>,
+    userId: string,
+  ): Promise<void[]> {
     const changes: Promise<void>[] = [];
-    const trackFields = ['title', 'description', 'date', 'endDate', 'location', 'venue', 'status', 'visibility', 'eventType', 'category'];
+    const trackFields = [
+      'title',
+      'description',
+      'date',
+      'endDate',
+      'location',
+      'venue',
+      'status',
+      'visibility',
+      'eventType',
+      'category',
+    ];
     for (const field of trackFields) {
-      if (updateData[field] !== undefined && String(oldEvent[field]) !== String(updateData[field])) {
-        changes.push(this.createHistory(oldEvent.id, userId, 'UPDATE', field, String(oldEvent[field] || ''), String(updateData[field] || '')));
+      if (
+        updateData[field] !== undefined &&
+        String(oldEvent[field]) !== String(updateData[field])
+      ) {
+        changes.push(
+          this.createHistory(
+            oldEvent.id,
+            userId,
+            'UPDATE',
+            field,
+            String(oldEvent[field] || ''),
+            String(updateData[field] || ''),
+          ),
+        );
       }
     }
     return Promise.all(changes);
@@ -1195,7 +1372,7 @@ export class TimelineService {
     if (event.date) autoTags.push(new Date(event.date).getFullYear().toString());
     if (autoTags.length > 0) {
       await this.prisma.eventSearchTag.createMany({
-        data: autoTags.map(tag => ({ eventId: event.id, tag, category: 'auto' })),
+        data: autoTags.map((tag) => ({ eventId: event.id, tag, category: 'auto' })),
         skipDuplicates: true,
       });
     }
@@ -1207,14 +1384,20 @@ export class TimelineService {
     const event = await this.prisma.timelineEvent.findUnique({ where: { id } });
     if (!event) throw new NotFoundException('Timeline event not found');
     const family = await this.prisma.family.findUnique({ where: { id: event.familyId } });
-    if (!family || family.ownerId !== userId) throw new ForbiddenException('You do not have access');
+    if (!family || family.ownerId !== userId)
+      throw new ForbiddenException('You do not have access');
 
     const updated = await this.prisma.timelineEvent.update({
       where: { id },
       data: { deletedAt: new Date(), status: 'ARCHIVED' },
     });
 
-    await this.createActivity(id, 'EVENT_DELETED', `Event "${event.title}" was soft-deleted`, userId);
+    await this.createActivity(
+      id,
+      'EVENT_DELETED',
+      `Event "${event.title}" was soft-deleted`,
+      userId,
+    );
     await this.createHistory(id, userId, 'DELETE');
     return updated;
   }
@@ -1223,7 +1406,8 @@ export class TimelineService {
     const event = await this.prisma.timelineEvent.findUnique({ where: { id } });
     if (!event) throw new NotFoundException('Timeline event not found');
     const family = await this.prisma.family.findUnique({ where: { id: event.familyId } });
-    if (!family || family.ownerId !== userId) throw new ForbiddenException('You do not have access');
+    if (!family || family.ownerId !== userId)
+      throw new ForbiddenException('You do not have access');
 
     const updated = await this.prisma.timelineEvent.update({
       where: { id },
@@ -1243,7 +1427,12 @@ export class TimelineService {
       data: { pinned: !event.pinned },
     });
 
-    await this.createActivity(id, event.pinned ? 'EVENT_UNPINNED' : 'EVENT_PINNED', `Event "${event.title}" was ${event.pinned ? 'unpinned' : 'pinned'}`, userId);
+    await this.createActivity(
+      id,
+      event.pinned ? 'EVENT_UNPINNED' : 'EVENT_PINNED',
+      `Event "${event.title}" was ${event.pinned ? 'unpinned' : 'pinned'}`,
+      userId,
+    );
     return updated;
   }
 
@@ -1256,7 +1445,12 @@ export class TimelineService {
       data: { featured: !event.featured },
     });
 
-    await this.createActivity(id, event.featured ? 'EVENT_UNFEATURED' : 'EVENT_FEATURED', `Event "${event.title}" was ${event.featured ? 'unfeatured' : 'featured'}`, userId);
+    await this.createActivity(
+      id,
+      event.featured ? 'EVENT_UNFEATURED' : 'EVENT_FEATURED',
+      `Event "${event.title}" was ${event.featured ? 'unfeatured' : 'featured'}`,
+      userId,
+    );
     return updated;
   }
 
@@ -1269,7 +1463,12 @@ export class TimelineService {
       data: { status: 'COMPLETED', publishedAt: new Date() },
     });
 
-    await this.createActivity(id, 'EVENT_PUBLISHED', `Event "${event.title}" was published`, userId);
+    await this.createActivity(
+      id,
+      'EVENT_PUBLISHED',
+      `Event "${event.title}" was published`,
+      userId,
+    );
     await this.createHistory(id, userId, 'PUBLISH', 'status', event.status, 'COMPLETED');
     return updated;
   }
@@ -1283,7 +1482,12 @@ export class TimelineService {
       data: { status: 'SCHEDULED', scheduledAt: event.date || new Date() },
     });
 
-    await this.createActivity(id, 'EVENT_SCHEDULED', `Event "${event.title}" was scheduled`, userId);
+    await this.createActivity(
+      id,
+      'EVENT_SCHEDULED',
+      `Event "${event.title}" was scheduled`,
+      userId,
+    );
     return updated;
   }
 
@@ -1305,7 +1509,12 @@ export class TimelineService {
       include: { user: { select: { id: true, name: true, avatar: true } } },
     });
 
-    await this.createActivity(eventId, 'COMMENT_ADDED', `A comment was added to "${event.title}"`, userId);
+    await this.createActivity(
+      eventId,
+      'COMMENT_ADDED',
+      `A comment was added to "${event.title}"`,
+      userId,
+    );
     return comment;
   }
 
@@ -1374,7 +1583,12 @@ export class TimelineService {
       include: { user: { select: { id: true, name: true, avatar: true } } },
     });
 
-    await this.createActivity(eventId, 'REACTION_ADDED', `A ${emoji} reaction was added to "${event.title}"`, userId);
+    await this.createActivity(
+      eventId,
+      'REACTION_ADDED',
+      `A ${emoji} reaction was added to "${event.title}"`,
+      userId,
+    );
     return reaction;
   }
 
@@ -1396,19 +1610,23 @@ export class TimelineService {
 
   // === DOCUMENTS ===
 
-  async addDocument(eventId: string, data: {
-    fileName: string;
-    fileType: string;
-    fileUrl: string;
-    fileSize?: number;
-    title?: string;
-    description?: string;
-    issueDate?: string;
-    expiryDate?: string;
-    ownerId?: string;
-    privacy?: string;
-    tags?: string[];
-  }, userId: string) {
+  async addDocument(
+    eventId: string,
+    data: {
+      fileName: string;
+      fileType: string;
+      fileUrl: string;
+      fileSize?: number;
+      title?: string;
+      description?: string;
+      issueDate?: string;
+      expiryDate?: string;
+      ownerId?: string;
+      privacy?: string;
+      tags?: string[];
+    },
+    userId: string,
+  ) {
     const event = await this.prisma.timelineEvent.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Event not found');
 
@@ -1432,7 +1650,12 @@ export class TimelineService {
       },
     });
 
-    await this.createActivity(eventId, 'DOCUMENT_ADDED', `Document "${data.fileName}" was attached to "${event.title}"`, userId);
+    await this.createActivity(
+      eventId,
+      'DOCUMENT_ADDED',
+      `Document "${data.fileName}" was attached to "${event.title}"`,
+      userId,
+    );
     return doc;
   }
 
@@ -1449,7 +1672,11 @@ export class TimelineService {
     return { documents: docs, total: docs.length };
   }
 
-  async updateDocument(docId: string, data: { title?: string; description?: string; verificationStatus?: string; privacy?: string }, userId: string) {
+  async updateDocument(
+    docId: string,
+    data: { title?: string; description?: string; verificationStatus?: string; privacy?: string },
+    userId: string,
+  ) {
     const doc = await this.prisma.eventDocument.findUnique({ where: { id: docId } });
     if (!doc) throw new NotFoundException('Document not found');
 
@@ -1458,7 +1685,9 @@ export class TimelineService {
       data: {
         ...(data.title !== undefined && { title: data.title }),
         ...(data.description !== undefined && { description: data.description }),
-        ...(data.verificationStatus !== undefined && { verificationStatus: data.verificationStatus }),
+        ...(data.verificationStatus !== undefined && {
+          verificationStatus: data.verificationStatus,
+        }),
         ...(data.privacy !== undefined && { privacy: data.privacy }),
       },
     });
@@ -1469,7 +1698,12 @@ export class TimelineService {
     if (!doc) throw new NotFoundException('Document not found');
 
     await this.prisma.eventDocument.delete({ where: { id: docId } });
-    await this.createActivity(doc.eventId, 'DOCUMENT_REMOVED', `Document "${doc.fileName}" was removed`, userId);
+    await this.createActivity(
+      doc.eventId,
+      'DOCUMENT_REMOVED',
+      `Document "${doc.fileName}" was removed`,
+      userId,
+    );
     return { message: 'Document removed' };
   }
 
@@ -1620,7 +1854,7 @@ export class TimelineService {
 
     if (event.media.length > 0) {
       await this.prisma.eventMedia.createMany({
-        data: event.media.map(m => ({
+        data: event.media.map((m) => ({
           eventId: newEvent.id,
           url: m.url,
           type: m.type,
@@ -1630,7 +1864,12 @@ export class TimelineService {
       });
     }
 
-    await this.createActivity(newEvent.id, 'EVENT_DUPLICATED', `Event was duplicated from "${event.title}"`, userId);
+    await this.createActivity(
+      newEvent.id,
+      'EVENT_DUPLICATED',
+      `Event was duplicated from "${event.title}"`,
+      userId,
+    );
     return newEvent;
   }
 

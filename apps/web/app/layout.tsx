@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import { appConfig } from '@digital-family-tree/config';
 import { ThemeProvider } from '@/lib/providers';
 import { AuthProvider } from '@/lib/auth-context';
+import { ReticleDev } from './reticle-dev';
 import './globals.css';
 
 const geistSans = Geist({
@@ -83,6 +84,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans`}>
+        {process.env.NODE_ENV === 'development' && <ReticleDev />}
         <ThemeProvider>
           <AuthProvider>
             <div className="relative flex min-h-screen flex-col">{children}</div>

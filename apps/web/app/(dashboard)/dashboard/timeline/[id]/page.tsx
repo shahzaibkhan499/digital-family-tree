@@ -5,18 +5,51 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ChevronRight, Calendar, Clock, MapPin, Users, Edit3, Trash2, Copy,
-  Pin, Star, Share2, Globe, Lock, Eye, UserPlus, Check, X, MessageSquare,
-  FileText, Image as ImageIcon, Activity, History, ArrowLeft, Download,
-  ExternalLink, Tag, FolderOpen, AlertTriangle,
-  MoreHorizontal, Bookmark, Bell,
+  ChevronRight,
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+  Edit3,
+  Trash2,
+  Copy,
+  Pin,
+  Star,
+  Share2,
+  Globe,
+  Lock,
+  Eye,
+  UserPlus,
+  Check,
+  X,
+  MessageSquare,
+  FileText,
+  Image as ImageIcon,
+  Activity,
+  History,
+  ArrowLeft,
+  Download,
+  ExternalLink,
+  Tag,
+  FolderOpen,
+  AlertTriangle,
+  MoreHorizontal,
+  Bookmark,
+  Bell,
 } from 'lucide-react';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import {
-  EVENT_TYPE_CONFIG, STATUS_CONFIG, VISIBILITY_OPTIONS,
-  getEventConfig, getStatusConfig, formatDate, formatTime,
-  formatRelative, calcCountdown, EVENT_CATEGORIES,
+  EVENT_TYPE_CONFIG,
+  STATUS_CONFIG,
+  VISIBILITY_OPTIONS,
+  getEventConfig,
+  getStatusConfig,
+  formatDate,
+  formatTime,
+  formatRelative,
+  calcCountdown,
+  EVENT_CATEGORIES,
 } from '../components/constants';
 import EventTagsPanel from '../components/event-tags-panel';
 import EventRemindersPanel from '../components/event-reminders-panel';
@@ -51,15 +84,42 @@ const TAB_DEFS = [
   { id: 'notifications', label: 'Alerts', icon: Bell },
 ] as const;
 
-type TabId = typeof TAB_DEFS[number]['id'];
+type TabId = (typeof TAB_DEFS)[number]['id'];
 
-const VISIBILITY_BADGES: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
-  ONLY_ME: { label: 'Only Me', color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400', icon: Lock },
-  FAMILY: { label: 'Family', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: Users },
-  SUB_CLAN: { label: 'Sub Clan', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400', icon: Users },
-  CLAN: { label: 'Clan', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: Globe },
-  COMMUNITY: { label: 'Community', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400', icon: Globe },
-  PUBLIC: { label: 'Public', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: Globe },
+const VISIBILITY_BADGES: Record<
+  string,
+  { label: string; color: string; icon: React.ComponentType<{ className?: string }> }
+> = {
+  ONLY_ME: {
+    label: 'Only Me',
+    color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+    icon: Lock,
+  },
+  FAMILY: {
+    label: 'Family',
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    icon: Users,
+  },
+  SUB_CLAN: {
+    label: 'Sub Clan',
+    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+    icon: Users,
+  },
+  CLAN: {
+    label: 'Clan',
+    color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    icon: Globe,
+  },
+  COMMUNITY: {
+    label: 'Community',
+    color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+    icon: Globe,
+  },
+  PUBLIC: {
+    label: 'Public',
+    color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    icon: Globe,
+  },
 };
 
 const REACTION_EMOJIS = ['ðŸ‘', 'â¤ï¸', 'ðŸŽ‰', 'ðŸ˜¢', 'ðŸ”¥'];
@@ -134,10 +194,19 @@ interface EventDetail {
   [key: string]: unknown;
 }
 
-function UserAvatar({ user: u, size = 'sm' }: { user: { name?: string; firstName?: string; avatar?: string } | null | undefined; size?: 'sm' | 'md' | 'lg' }) {
-  const dims = size === 'sm' ? 'h-7 w-7 text-[10px]' : size === 'md' ? 'h-9 w-9 text-xs' : 'h-12 w-12 text-sm';
+function UserAvatar({
+  user: u,
+  size = 'sm',
+}: {
+  user: { name?: string; firstName?: string; avatar?: string } | null | undefined;
+  size?: 'sm' | 'md' | 'lg';
+}) {
+  const dims =
+    size === 'sm' ? 'h-7 w-7 text-[10px]' : size === 'md' ? 'h-9 w-9 text-xs' : 'h-12 w-12 text-sm';
   return (
-    <div className={`${dims} shrink-0 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center font-bold text-emerald-700 dark:text-emerald-400 overflow-hidden`}>
+    <div
+      className={`${dims} shrink-0 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center font-bold text-emerald-700 dark:text-emerald-400 overflow-hidden`}
+    >
       {u?.avatar ? (
         <img src={u.avatar} alt={u.name || ''} className="h-full w-full object-cover" />
       ) : (
@@ -150,7 +219,9 @@ function UserAvatar({ user: u, size = 'sm' }: { user: { name?: string; firstName
 function StatusBadge({ status }: { status: string }) {
   const cfg = getStatusConfig(status);
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${cfg.color}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${cfg.color}`}
+    >
       {status === 'CANCELLED' && <X className="h-3 w-3" />}
       {cfg.label}
     </span>
@@ -161,7 +232,9 @@ function VisBadge({ visibility }: { visibility: string }) {
   const badge = VISIBILITY_BADGES[visibility] || VISIBILITY_BADGES.FAMILY;
   const Icon = badge.icon;
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.color}`}>
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.color}`}
+    >
       <Icon className="h-3 w-3" />
       {badge.label}
     </span>
@@ -181,11 +254,24 @@ export default function EventDetailPage() {
   const [deleting, setDeleting] = useState(false);
 
   const [participants, setParticipants] = useState<EventParticipant[]>([]);
-  const [participantStats, setParticipantStats] = useState<{ accepted?: number; pending?: number; declined?: number } | null>(null);
+  const [participantStats, setParticipantStats] = useState<{
+    accepted?: number;
+    pending?: number;
+    declined?: number;
+  } | null>(null);
   const [rsvpStatus, setRsvpStatus] = useState<string | null>(null);
   const [submittingRsvp, setSubmittingRsvp] = useState(false);
 
-  const [documents, setDocuments] = useState<{ id?: string; title?: string; name?: string; url?: string; description?: string; isPrivate?: boolean }[]>([]);
+  const [documents, setDocuments] = useState<
+    {
+      id?: string;
+      title?: string;
+      name?: string;
+      url?: string;
+      description?: string;
+      isPrivate?: boolean;
+    }[]
+  >([]);
   const [docsLoading, setDocsLoading] = useState(false);
   const [showDocForm, setShowDocForm] = useState(false);
   const [docTitle, setDocTitle] = useState('');
@@ -199,18 +285,31 @@ export default function EventDetailPage() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [mediaSearchQuery, setMediaSearchQuery] = useState('');
 
-  const [activities, setActivities] = useState<{ id?: string; type?: string; action?: string; createdAt?: string; user?: { name?: string } }[]>([]);
+  const [activities, setActivities] = useState<
+    { id?: string; type?: string; action?: string; createdAt?: string; user?: { name?: string } }[]
+  >([]);
   const [activityPage, setActivityPage] = useState(1);
   const [activityTotal, setActivityTotal] = useState(0);
   const [activityLoading, setActivityLoading] = useState(false);
   const [activityHasMore, setActivityHasMore] = useState(true);
 
-  const [historyItems, setHistoryItems] = useState<{ id?: string; action?: string; field?: string; createdAt?: string; user?: { name?: string } }[]>([]);
+  const [historyItems, setHistoryItems] = useState<
+    { id?: string; action?: string; field?: string; createdAt?: string; user?: { name?: string } }[]
+  >([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
   const [historyHasMore, setHistoryHasMore] = useState(true);
 
-  const [comments, setComments] = useState<{ id: string; content: string; userId?: string; createdAt?: string; user?: { name?: string }; replies?: { id: string; content: string }[] }[]>([]);
+  const [comments, setComments] = useState<
+    {
+      id: string;
+      content: string;
+      userId?: string;
+      createdAt?: string;
+      user?: { name?: string };
+      replies?: { id: string; content: string }[];
+    }[]
+  >([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
@@ -223,7 +322,9 @@ export default function EventDetailPage() {
   const [commentTotal, setCommentTotal] = useState(0);
 
   const [reactions, setReactions] = useState<{ emoji: string; userId: string; id?: string }[]>([]);
-  const [groupedReactions, setGroupedReactions] = useState<Record<string, { emoji: string; userId: string }[]>>({});
+  const [groupedReactions, setGroupedReactions] = useState<
+    Record<string, { emoji: string; userId: string }[]>
+  >({});
   const [userReaction, setUserReaction] = useState<string | null>(null);
 
   const [showShareMenu, setShowShareMenu] = useState(false);
@@ -240,7 +341,10 @@ export default function EventDetailPage() {
   const eventsFetched = useRef(false);
   const tabsFetched = useRef<Set<string>>(new Set());
 
-  const isOwner = event?.userId === user?.id || event?.organizerId === user?.id;
+  const isOwner =
+    event?.userId === user?.id ||
+    event?.organizerId === user?.id ||
+    event?.createdById === user?.id;
 
   useEffect(() => {
     if (eventsFetched.current) return;
@@ -262,65 +366,90 @@ export default function EventDetailPage() {
 
   useEffect(() => {
     if (!eventId) return;
-    api.timeline.participants(eventId).then(r => {
-      setParticipants(r.participants || []);
-      setParticipantStats(r.stats || null);
-    }).catch(() => {});
-    api.timeline.getReactions(eventId).then(r => {
-      setReactions(r.reactions || []);
-      setGroupedReactions(r.grouped || {});
-      if (user) {
-        const myReaction = (r.reactions || []).find((rx) => rx.userId === user.id);
-        setUserReaction(myReaction?.emoji || null);
-      }
-    }).catch(() => {});
+    api.timeline
+      .participants(eventId)
+      .then((r) => {
+        setParticipants(r.participants || []);
+        setParticipantStats(r.stats || null);
+      })
+      .catch(() => {});
+    api.timeline
+      .getReactions(eventId)
+      .then((r) => {
+        setReactions(r.reactions || []);
+        setGroupedReactions(r.grouped || {});
+        if (user) {
+          const myReaction = (r.reactions || []).find((rx) => rx.userId === user.id);
+          setUserReaction(myReaction?.emoji || null);
+        }
+      })
+      .catch(() => {});
   }, [eventId, user]);
 
-  const fetchTabData = useCallback((tab: TabId) => {
-    if (tabsFetched.current.has(tab)) return;
-    tabsFetched.current.add(tab);
+  const fetchTabData = useCallback(
+    (tab: TabId) => {
+      if (tabsFetched.current.has(tab)) return;
+      tabsFetched.current.add(tab);
 
-    if (tab === 'documents') {
-      setDocsLoading(true);
-      api.timeline.getDocuments(eventId).then(r => {
-        setDocuments(r.documents || []);
-      }).catch(() => {}).finally(() => setDocsLoading(false));
-    }
-    if (tab === 'media') {
-      setMediaLoading(true);
-      const media = event?.media || event?.mediaUrls || [];
-      setTimeout(() => {
-        setMediaItems(media);
-        setMediaLoading(false);
-      }, 300);
-    }
-    if (tab === 'activity') {
-      setActivityLoading(true);
-      api.timeline.getActivity(eventId, 1, 20).then(r => {
-        setActivities(r.activities || []);
-        setActivityTotal(r.total || 0);
-        setActivityHasMore((r.activities || []).length >= 20);
-        setActivityPage(1);
-      }).catch(() => {}).finally(() => setActivityLoading(false));
-    }
-    if (tab === 'history') {
-      setHistoryLoading(true);
-      api.timeline.getHistory(eventId, 1, 20).then(r => {
-        setHistoryItems(r.history || []);
-        setHistoryHasMore((r.history || []).length >= 20);
-        setHistoryPage(1);
-      }).catch(() => {}).finally(() => setHistoryLoading(false));
-    }
-    if (tab === 'comments') {
-      setCommentsLoading(true);
-      api.timeline.getComments(eventId, 1, 20).then(r => {
-        setComments(r.comments || []);
-        setCommentTotal(r.total || 0);
-        setCommentsHasMore((r.comments || []).length >= 20);
-        setCommentsPage(1);
-      }).catch(() => {}).finally(() => setCommentsLoading(false));
-    }
-  }, [eventId, event]);
+      if (tab === 'documents') {
+        setDocsLoading(true);
+        api.timeline
+          .getDocuments(eventId)
+          .then((r) => {
+            setDocuments(r.documents || []);
+          })
+          .catch(() => {})
+          .finally(() => setDocsLoading(false));
+      }
+      if (tab === 'media') {
+        setMediaLoading(true);
+        const media = event?.media || event?.mediaUrls || [];
+        setTimeout(() => {
+          setMediaItems(media);
+          setMediaLoading(false);
+        }, 300);
+      }
+      if (tab === 'activity') {
+        setActivityLoading(true);
+        api.timeline
+          .getActivity(eventId, 1, 20)
+          .then((r) => {
+            setActivities(r.activities || []);
+            setActivityTotal(r.total || 0);
+            setActivityHasMore((r.activities || []).length >= 20);
+            setActivityPage(1);
+          })
+          .catch(() => {})
+          .finally(() => setActivityLoading(false));
+      }
+      if (tab === 'history') {
+        setHistoryLoading(true);
+        api.timeline
+          .getHistory(eventId, 1, 20)
+          .then((r) => {
+            setHistoryItems(r.history || []);
+            setHistoryHasMore((r.history || []).length >= 20);
+            setHistoryPage(1);
+          })
+          .catch(() => {})
+          .finally(() => setHistoryLoading(false));
+      }
+      if (tab === 'comments') {
+        setCommentsLoading(true);
+        api.timeline
+          .getComments(eventId, 1, 20)
+          .then((r) => {
+            setComments(r.comments || []);
+            setCommentTotal(r.total || 0);
+            setCommentsHasMore((r.comments || []).length >= 20);
+            setCommentsPage(1);
+          })
+          .catch(() => {})
+          .finally(() => setCommentsLoading(false));
+      }
+    },
+    [eventId, event],
+  );
 
   const handleTabChange = (tab: TabId) => {
     setActiveTab(tab);
@@ -332,10 +461,14 @@ export default function EventDetailPage() {
     setActivityLoading(true);
     try {
       const r = await api.timeline.getActivity(eventId, nextPage, 20);
-      setActivities(prev => [...prev, ...(r.activities || [])]);
+      setActivities((prev) => [...prev, ...(r.activities || [])]);
       setActivityPage(nextPage);
       setActivityHasMore((r.activities || []).length >= 20);
-    } catch { /* empty */ } finally { setActivityLoading(false); }
+    } catch {
+      /* empty */
+    } finally {
+      setActivityLoading(false);
+    }
   };
 
   const loadMoreHistory = async () => {
@@ -343,10 +476,14 @@ export default function EventDetailPage() {
     setHistoryLoading(true);
     try {
       const r = await api.timeline.getHistory(eventId, nextPage, 20);
-      setHistoryItems(prev => [...prev, ...(r.history || [])]);
+      setHistoryItems((prev) => [...prev, ...(r.history || [])]);
       setHistoryPage(nextPage);
       setHistoryHasMore((r.history || []).length >= 20);
-    } catch { /* empty */ } finally { setHistoryLoading(false); }
+    } catch {
+      /* empty */
+    } finally {
+      setHistoryLoading(false);
+    }
   };
 
   const loadMoreComments = async () => {
@@ -354,10 +491,14 @@ export default function EventDetailPage() {
     setCommentsLoading(true);
     try {
       const r = await api.timeline.getComments(eventId, nextPage, 20);
-      setComments(prev => [...prev, ...(r.comments || [])]);
+      setComments((prev) => [...prev, ...(r.comments || [])]);
       setCommentsPage(nextPage);
       setCommentsHasMore((r.comments || []).length >= 20);
-    } catch { /* empty */ } finally { setCommentsLoading(false); }
+    } catch {
+      /* empty */
+    } finally {
+      setCommentsLoading(false);
+    }
   };
 
   const handleRsvp = async (status: string) => {
@@ -365,7 +506,11 @@ export default function EventDetailPage() {
     try {
       await api.timeline.rsvp(eventId, status);
       setRsvpStatus(status);
-    } catch { /* empty */ } finally { setSubmittingRsvp(false); }
+    } catch {
+      /* empty */
+    } finally {
+      setSubmittingRsvp(false);
+    }
   };
 
   const handleReaction = async (emoji: string) => {
@@ -375,42 +520,54 @@ export default function EventDetailPage() {
       setReactions(r.reactions || []);
       setGroupedReactions(r.grouped || {});
       setUserReaction(emoji);
-    } catch { /* empty */ }
+    } catch {
+      /* empty */
+    }
   };
 
   const handlePublish = async () => {
     try {
       await api.timeline.publish(eventId);
-      setEvent((p) => ({ ...p, status: 'PUBLISHED' } as EventDetail));
-    } catch { /* empty */ }
+      setEvent((p) => ({ ...p, status: 'PUBLISHED' }) as EventDetail);
+    } catch {
+      /* empty */
+    }
   };
 
   const handleArchive = async () => {
     try {
       await api.timeline.archive(eventId);
-      setEvent((p) => ({ ...p, status: 'ARCHIVED' } as EventDetail));
-    } catch { /* empty */ }
+      setEvent((p) => ({ ...p, status: 'ARCHIVED' }) as EventDetail);
+    } catch {
+      /* empty */
+    }
   };
 
   const handlePin = async () => {
     try {
       await api.timeline.pin(eventId);
-      setEvent((p) => ({ ...p, pinned: !p?.pinned } as EventDetail));
-    } catch { /* empty */ }
+      setEvent((p) => ({ ...p, pinned: !p?.pinned }) as EventDetail);
+    } catch {
+      /* empty */
+    }
   };
 
   const handleFeature = async () => {
     try {
       await api.timeline.feature(eventId);
-      setEvent((p) => ({ ...p, featured: !p?.featured } as EventDetail));
-    } catch { /* empty */ }
+      setEvent((p) => ({ ...p, featured: !p?.featured }) as EventDetail);
+    } catch {
+      /* empty */
+    }
   };
 
   const handleDuplicate = async () => {
     try {
       const dup = await api.timeline.duplicate(eventId);
       router.push(`/dashboard/timeline/${dup.id}`);
-    } catch { /* empty */ }
+    } catch {
+      /* empty */
+    }
   };
 
   const handleExportPdf = async () => {
@@ -418,30 +575,41 @@ export default function EventDetailPage() {
       await api.timeline.exportPdf(eventId);
       window.open(`/dashboard/timeline/${eventId}/print`, '_blank');
       showToast('Print version generated');
-    } catch { showToast('Export failed'); }
+    } catch {
+      showToast('Export failed');
+    }
   };
 
   const handleExportJson = async () => {
     try {
       await api.timeline.exportJson(eventId);
       showToast('JSON export started');
-    } catch { showToast('Export failed'); }
+    } catch {
+      showToast('Export failed');
+    }
   };
 
   const handleShare = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
       showToast('Link copied to clipboard');
-    } catch { showToast('Failed to copy link'); }
+    } catch {
+      showToast('Failed to copy link');
+    }
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) return;
+    if (!confirm('Are you sure you want to delete this event? This action cannot be undone.'))
+      return;
     setDeleting(true);
     try {
       await api.timeline.delete(eventId);
       router.push('/dashboard/timeline');
-    } catch { /* empty */ } finally { setDeleting(false); }
+    } catch {
+      /* empty */
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleSubmitComment = async () => {
@@ -449,10 +617,14 @@ export default function EventDetailPage() {
     setSubmittingComment(true);
     try {
       const c = await api.timeline.addComment(eventId, commentText.trim());
-      setComments(prev => [c, ...prev]);
+      setComments((prev) => [c, ...prev]);
       setCommentText('');
-      setCommentTotal(p => p + 1);
-    } catch { /* empty */ } finally { setSubmittingComment(false); }
+      setCommentTotal((p) => p + 1);
+    } catch {
+      /* empty */
+    } finally {
+      setSubmittingComment(false);
+    }
   };
 
   const handleSubmitReply = async (parentId: string) => {
@@ -460,18 +632,28 @@ export default function EventDetailPage() {
     setSubmittingReply(true);
     try {
       const c = await api.timeline.addComment(eventId, replyText.trim(), parentId);
-      setComments(prev => prev.map(cm => cm.id === parentId ? { ...cm, replies: [...(cm.replies || []), c] } : cm));
+      setComments((prev) =>
+        prev.map((cm) =>
+          cm.id === parentId ? { ...cm, replies: [...(cm.replies || []), c] } : cm,
+        ),
+      );
       setReplyText('');
       setReplyTo(null);
-    } catch { /* empty */ } finally { setSubmittingReply(false); }
+    } catch {
+      /* empty */
+    } finally {
+      setSubmittingReply(false);
+    }
   };
 
   const handleDeleteComment = async (commentId: string) => {
     try {
       await api.timeline.deleteComment(commentId);
-      setComments(prev => prev.filter(c => c.id !== commentId));
-      setCommentTotal(p => Math.max(0, p - 1));
-    } catch { /* empty */ }
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+      setCommentTotal((p) => Math.max(0, p - 1));
+    } catch {
+      /* empty */
+    }
   };
 
   const handleAddDocument = async () => {
@@ -484,13 +666,17 @@ export default function EventDetailPage() {
         url: docUrl.trim(),
         isPrivate: docPrivate,
       });
-      setDocuments(prev => [doc, ...prev]);
+      setDocuments((prev) => [doc, ...prev]);
       setDocTitle('');
       setDocDesc('');
       setDocUrl('');
       setDocPrivate(false);
       setShowDocForm(false);
-    } catch { /* empty */ } finally { setSubmittingDoc(false); }
+    } catch {
+      /* empty */
+    } finally {
+      setSubmittingDoc(false);
+    }
   };
 
   if (loading) {
@@ -499,8 +685,14 @@ export default function EventDetailPage() {
         <SkeletonBlock className="h-5 w-48 mb-6" />
         <SkeletonBlock className="h-48 w-full rounded-2xl" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4"><SkeletonCard /><SkeletonCard /></div>
-          <div className="space-y-4"><SkeletonCard /><SkeletonCard /></div>
+          <div className="lg:col-span-2 space-y-4">
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+          <div className="space-y-4">
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
         </div>
       </div>
     );
@@ -513,8 +705,13 @@ export default function EventDetailPage() {
           <AlertTriangle className="h-10 w-10 text-red-500" />
         </div>
         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Event Not Found</h2>
-        <p className="text-slate-500 dark:text-slate-400 mb-6">The event you're looking for doesn't exist or has been removed.</p>
-        <Link href="/dashboard/timeline" className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors">
+        <p className="text-slate-500 dark:text-slate-400 mb-6">
+          The event you're looking for doesn't exist or has been removed.
+        </p>
+        <Link
+          href="/dashboard/timeline"
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+        >
           <ArrowLeft className="h-4 w-4" /> Back to Timeline
         </Link>
       </div>
@@ -526,9 +723,13 @@ export default function EventDetailPage() {
   const countdown = event.date ? calcCountdown(event.date) : '';
   const media = event.media || event.mediaUrls || [];
   const tags = event.tags || [];
-  const acceptedCount = participantStats?.accepted || participants.filter((p) => p.rsvpStatus === 'ACCEPTED').length;
-  const pendingCount = participantStats?.pending || participants.filter((p) => p.rsvpStatus === 'PENDING' || !p.rsvpStatus).length;
-  const declinedCount = participantStats?.declined || participants.filter((p) => p.rsvpStatus === 'DECLINED').length;
+  const acceptedCount =
+    participantStats?.accepted || participants.filter((p) => p.rsvpStatus === 'ACCEPTED').length;
+  const pendingCount =
+    participantStats?.pending ||
+    participants.filter((p) => p.rsvpStatus === 'PENDING' || !p.rsvpStatus).length;
+  const declinedCount =
+    participantStats?.declined || participants.filter((p) => p.rsvpStatus === 'DECLINED').length;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 space-y-0">
@@ -548,10 +749,16 @@ export default function EventDetailPage() {
         </Link>
 
         {/* Cover Image / Gradient Banner */}
-        <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${config.gradient}`}>
+        <div
+          className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${config.gradient}`}
+        >
           {event.coverImage ? (
             <div className="relative h-[280px] w-full md:h-[320px]">
-              <img src={event.coverImage} alt={event.title} className="h-full w-full object-cover" />
+              <img
+                src={event.coverImage}
+                alt={event.title}
+                className="h-full w-full object-cover"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
               <div className="absolute bottom-4 left-5">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 text-2xl backdrop-blur-md shadow-lg">
@@ -562,8 +769,12 @@ export default function EventDetailPage() {
           ) : (
             <div className="relative flex h-[180px] items-center justify-center overflow-hidden md:h-[220px]">
               <div className="absolute inset-0 opacity-[0.07]">
-                <div className="absolute right-8 top-6 text-[110px] leading-none">{config.icon}</div>
-                <div className="absolute bottom-4 left-10 text-[80px] leading-none opacity-60">{config.icon}</div>
+                <div className="absolute right-8 top-6 text-[110px] leading-none">
+                  {config.icon}
+                </div>
+                <div className="absolute bottom-4 left-10 text-[80px] leading-none opacity-60">
+                  {config.icon}
+                </div>
               </div>
               <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/20 text-4xl backdrop-blur-sm shadow-lg ring-1 ring-white/10">
                 {config.icon}
@@ -574,18 +785,22 @@ export default function EventDetailPage() {
 
         {/* Badges Row */}
         <div className="flex flex-wrap items-center gap-2">
-          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${config.color}`}>
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${config.color}`}
+          >
             <span>{config.icon}</span>
             {config.label}
           </span>
           <StatusBadge status={event.status || 'PUBLISHED'} />
           <VisBadge visibility={event.visibility || 'FAMILY'} />
           {countdown && event.status !== 'COMPLETED' && event.status !== 'CANCELLED' && (
-            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
-              countdown === 'Today' || countdown === 'Tomorrow'
-                ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 animate-pulse'
-                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-            }`}>
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                countdown === 'Today' || countdown === 'Tomorrow'
+                  ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 animate-pulse'
+                  : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+              }`}
+            >
               <Clock className="h-3 w-3" />
               {countdown}
             </span>
@@ -601,7 +816,9 @@ export default function EventDetailPage() {
             </span>
           )}
           {event.displayId && (
-            <span className="font-mono text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 dark:text-slate-500 rounded-full px-2 py-0.5">{event.displayId}</span>
+            <span className="font-mono text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 dark:text-slate-500 rounded-full px-2 py-0.5">
+              {event.displayId}
+            </span>
           )}
         </div>
 
@@ -613,7 +830,9 @@ export default function EventDetailPage() {
           {event.subtitle ? (
             <p className="mt-1.5 text-base text-slate-500 dark:text-slate-400">{event.subtitle}</p>
           ) : event.description ? (
-            <p className="mt-1.5 text-base text-slate-500 dark:text-slate-400 line-clamp-2">{event.description}</p>
+            <p className="mt-1.5 text-base text-slate-500 dark:text-slate-400 line-clamp-2">
+              {event.description}
+            </p>
           ) : null}
         </div>
 
@@ -677,7 +896,10 @@ export default function EventDetailPage() {
 
           <div className="relative">
             <button
-              onClick={() => { setShowShareMenu(!showShareMenu); setShowActionsMenu(false); }}
+              onClick={() => {
+                setShowShareMenu(!showShareMenu);
+                setShowActionsMenu(false);
+              }}
               className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               <Share2 className="h-4 w-4" />
@@ -685,16 +907,31 @@ export default function EventDetailPage() {
             </button>
             {showShareMenu && (
               <div className="absolute left-0 top-12 z-50 w-48 rounded-xl border border-slate-200 bg-white py-2 shadow-xl dark:border-slate-700 dark:bg-slate-900">
-                <button onClick={() => { handleShare(); setShowShareMenu(false); }}
-                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">
+                <button
+                  onClick={() => {
+                    handleShare();
+                    setShowShareMenu(false);
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
                   <Share2 className="h-4 w-4" /> Copy Link
                 </button>
-                <button onClick={() => { handleExportPdf(); setShowShareMenu(false); }}
-                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">
+                <button
+                  onClick={() => {
+                    handleExportPdf();
+                    setShowShareMenu(false);
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
                   <Download className="h-4 w-4" /> Export PDF
                 </button>
-                <button onClick={() => { handleExportJson(); setShowShareMenu(false); }}
-                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">
+                <button
+                  onClick={() => {
+                    handleExportJson();
+                    setShowShareMenu(false);
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
                   <Download className="h-4 w-4" /> Export JSON
                 </button>
               </div>
@@ -712,7 +949,10 @@ export default function EventDetailPage() {
           {isOwner && (
             <div className="relative">
               <button
-                onClick={() => { setShowActionsMenu(!showActionsMenu); setShowShareMenu(false); }}
+                onClick={() => {
+                  setShowActionsMenu(!showActionsMenu);
+                  setShowShareMenu(false);
+                }}
                 className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
               >
                 <MoreHorizontal className="h-4 w-4" />
@@ -720,32 +960,63 @@ export default function EventDetailPage() {
               {showActionsMenu && (
                 <div className="absolute left-0 top-12 z-50 w-56 rounded-xl border border-slate-200 bg-white py-2 shadow-xl dark:border-slate-700 dark:bg-slate-900">
                   {event.status !== 'PUBLISHED' && (
-                    <button onClick={() => { handlePublish(); setShowActionsMenu(false); }}
-                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">
+                    <button
+                      onClick={() => {
+                        handlePublish();
+                        setShowActionsMenu(false);
+                      }}
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                    >
                       <Globe className="h-4 w-4" /> Publish
                     </button>
                   )}
                   {event.status !== 'ARCHIVED' && (
-                    <button onClick={() => { handleArchive(); setShowActionsMenu(false); }}
-                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">
+                    <button
+                      onClick={() => {
+                        handleArchive();
+                        setShowActionsMenu(false);
+                      }}
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                    >
                       <FolderOpen className="h-4 w-4" /> Archive
                     </button>
                   )}
-                  <button onClick={() => { handlePin(); setShowActionsMenu(false); }}
-                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">
+                  <button
+                    onClick={() => {
+                      handlePin();
+                      setShowActionsMenu(false);
+                    }}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                  >
                     <Pin className="h-4 w-4" /> {event.pinned ? 'Unpin' : 'Pin'}
                   </button>
-                  <button onClick={() => { handleFeature(); setShowActionsMenu(false); }}
-                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">
+                  <button
+                    onClick={() => {
+                      handleFeature();
+                      setShowActionsMenu(false);
+                    }}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                  >
                     <Star className="h-4 w-4" /> {event.featured ? 'Unfeature' : 'Feature'}
                   </button>
-                  <button onClick={() => { handleDuplicate(); setShowActionsMenu(false); }}
-                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">
+                  <button
+                    onClick={() => {
+                      handleDuplicate();
+                      setShowActionsMenu(false);
+                    }}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                  >
                     <Copy className="h-4 w-4" /> Duplicate
                   </button>
                   <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
-                  <button onClick={() => { handleDelete(); setShowActionsMenu(false); }} disabled={deleting}
-                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/10">
+                  <button
+                    onClick={() => {
+                      handleDelete();
+                      setShowActionsMenu(false);
+                    }}
+                    disabled={deleting}
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/10"
+                  >
                     <Trash2 className="h-4 w-4" /> {deleting ? 'Deleting...' : 'Delete'}
                   </button>
                 </div>
@@ -774,16 +1045,25 @@ export default function EventDetailPage() {
                 <Icon className="h-4 w-4" />
                 <span className="hidden sm:inline">{tab.label}</span>
                 {tab.id === 'documents' && documents.length > 0 && (
-                  <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">{documents.length}</span>
+                  <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                    {documents.length}
+                  </span>
                 )}
                 {tab.id === 'comments' && commentTotal > 0 && (
-                  <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">{commentTotal}</span>
+                  <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                    {commentTotal}
+                  </span>
                 )}
                 {tab.id === 'activity' && activityTotal > 0 && (
-                  <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">{activityTotal}</span>
+                  <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                    {activityTotal}
+                  </span>
                 )}
                 {isActive && (
-                  <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-full" />
+                  <motion.div
+                    layoutId="tab-underline"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-full"
+                  />
                 )}
               </button>
             );
@@ -807,7 +1087,9 @@ export default function EventDetailPage() {
               <div className="lg:col-span-2 space-y-6">
                 {/* Event Details Card */}
                 <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Event Details</h3>
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
+                    Event Details
+                  </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {event.date && (
                       <div className="flex items-start gap-3">
@@ -816,7 +1098,9 @@ export default function EventDetailPage() {
                         </div>
                         <div>
                           <p className="text-xs text-slate-500 dark:text-slate-400">Date</p>
-                          <p className="text-sm font-medium text-slate-900 dark:text-white">{formatDate(event.date)}</p>
+                          <p className="text-sm font-medium text-slate-900 dark:text-white">
+                            {formatDate(event.date)}
+                          </p>
                         </div>
                       </div>
                     )}
@@ -828,7 +1112,11 @@ export default function EventDetailPage() {
                         <div>
                           <p className="text-xs text-slate-500 dark:text-slate-400">Time</p>
                           <p className="text-sm font-medium text-slate-900 dark:text-white">
-                            {event.time ? formatTime(event.time) : event.startTime ? formatTime(event.startTime) : ''}
+                            {event.time
+                              ? formatTime(event.time)
+                              : event.startTime
+                                ? formatTime(event.startTime)
+                                : ''}
                             {event.endTime && ` - ${formatTime(event.endTime)}`}
                           </p>
                         </div>
@@ -842,12 +1130,18 @@ export default function EventDetailPage() {
                         <div>
                           <p className="text-xs text-slate-500 dark:text-slate-400">Location</p>
                           {event.mapLink ? (
-                            <a href={event.mapLink} target="_blank" rel="noopener noreferrer"
-                              className="text-sm font-medium text-emerald-600 hover:underline dark:text-emerald-400 flex items-center gap-1">
+                            <a
+                              href={event.mapLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm font-medium text-emerald-600 hover:underline dark:text-emerald-400 flex items-center gap-1"
+                            >
                               {event.venue || event.location} <ExternalLink className="h-3 w-3" />
                             </a>
                           ) : (
-                            <p className="text-sm font-medium text-slate-900 dark:text-white">{event.venue || event.location}</p>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              {event.venue || event.location}
+                            </p>
                           )}
                         </div>
                       </div>
@@ -861,7 +1155,9 @@ export default function EventDetailPage() {
                           <p className="text-xs text-slate-500 dark:text-slate-400">Organizer</p>
                           <div className="flex items-center gap-1.5">
                             <UserAvatar user={event.organizer} size="sm" />
-                            <p className="text-sm font-medium text-slate-900 dark:text-white">{event.organizer.name || 'Unknown'}</p>
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              {event.organizer.name || 'Unknown'}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -873,7 +1169,9 @@ export default function EventDetailPage() {
                         </div>
                         <div>
                           <p className="text-xs text-slate-500 dark:text-slate-400">Category</p>
-                          <p className="text-sm font-medium text-slate-900 dark:text-white">{event.category}</p>
+                          <p className="text-sm font-medium text-slate-900 dark:text-white">
+                            {event.category}
+                          </p>
                         </div>
                       </div>
                     )}
@@ -884,8 +1182,10 @@ export default function EventDetailPage() {
                         </div>
                         <div>
                           <p className="text-xs text-slate-500 dark:text-slate-400">Family</p>
-                          <Link href={`/dashboard/families/${event.familyId || event.family?.id}`}
-                            className="text-sm font-medium text-emerald-600 hover:underline dark:text-emerald-400">
+                          <Link
+                            href={`/dashboard/families/${event.familyId || event.family?.id}`}
+                            className="text-sm font-medium text-emerald-600 hover:underline dark:text-emerald-400"
+                          >
                             {event.family?.name || 'Family'}
                           </Link>
                         </div>
@@ -897,14 +1197,22 @@ export default function EventDetailPage() {
                 {/* Description Card */}
                 {(event.description || event.story) && (
                   <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">About This Event</h3>
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
+                      About This Event
+                    </h3>
                     {event.description && (
-                      <p className="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{event.description}</p>
+                      <p className="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                        {event.description}
+                      </p>
                     )}
                     {event.story && (
                       <div className="mt-4 rounded-xl bg-slate-50 p-5 dark:bg-slate-800/50">
-                        <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Story</h4>
-                        <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{event.story}</div>
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                          Story
+                        </h4>
+                        <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                          {event.story}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -918,9 +1226,15 @@ export default function EventDetailPage() {
                     </h3>
                     {participantStats && (
                       <div className="flex gap-3 text-xs">
-                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">{acceptedCount} accepted</span>
-                        <span className="text-amber-600 dark:text-amber-400 font-medium">{pendingCount} pending</span>
-                        <span className="text-red-600 dark:text-red-400 font-medium">{declinedCount} declined</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                          {acceptedCount} accepted
+                        </span>
+                        <span className="text-amber-600 dark:text-amber-400 font-medium">
+                          {pendingCount} pending
+                        </span>
+                        <span className="text-red-600 dark:text-red-400 font-medium">
+                          {declinedCount} declined
+                        </span>
                       </div>
                     )}
                   </div>
@@ -928,31 +1242,46 @@ export default function EventDetailPage() {
                     <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 mb-3">
                       <UserAvatar user={event.organizer} size="md" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{event.organizer.name}</p>
+                        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                          {event.organizer.name}
+                        </p>
                         <p className="text-xs text-slate-500 dark:text-slate-400">Organizer</p>
                       </div>
                     </div>
                   )}
                   {participants.length === 0 ? (
-                    <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-4">No participants yet</p>
+                    <p className="text-sm text-slate-400 dark:text-slate-500 text-center py-4">
+                      No participants yet
+                    </p>
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {participants.map((p) => {
                         const member = p.member || p;
                         return (
-                          <div key={p.id || member.name} className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/50">
+                          <div
+                            key={p.id || member.name}
+                            className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800/50"
+                          >
                             <UserAvatar user={member} size="sm" />
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-medium text-slate-900 dark:text-white truncate">
                                 {member.name || ''}
                               </p>
                               {p.rsvpStatus && (
-                                <span className={`text-[10px] font-semibold ${
-                                  p.rsvpStatus === 'ACCEPTED' ? 'text-emerald-600 dark:text-emerald-400' :
-                                  p.rsvpStatus === 'DECLINED' ? 'text-red-500 dark:text-red-400' :
-                                  'text-amber-500 dark:text-amber-400'
-                                }`}>
-                                  {p.rsvpStatus === 'ACCEPTED' ? 'Going' : p.rsvpStatus === 'DECLINED' ? 'Declined' : 'Maybe'}
+                                <span
+                                  className={`text-[10px] font-semibold ${
+                                    p.rsvpStatus === 'ACCEPTED'
+                                      ? 'text-emerald-600 dark:text-emerald-400'
+                                      : p.rsvpStatus === 'DECLINED'
+                                        ? 'text-red-500 dark:text-red-400'
+                                        : 'text-amber-500 dark:text-amber-400'
+                                  }`}
+                                >
+                                  {p.rsvpStatus === 'ACCEPTED'
+                                    ? 'Going'
+                                    : p.rsvpStatus === 'DECLINED'
+                                      ? 'Declined'
+                                      : 'Maybe'}
                                 </span>
                               )}
                             </div>
@@ -966,10 +1295,15 @@ export default function EventDetailPage() {
                 {/* Tags */}
                 {tags.length > 0 && (
                   <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Tags</h3>
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                      Tags
+                    </h3>
                     <div className="flex flex-wrap gap-2">
                       {tags.map((tag: string, i: number) => (
-                        <span key={i} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                        <span
+                          key={i}
+                          className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                        >
                           <Tag className="h-3 w-3" /> {tag}
                         </span>
                       ))}
@@ -987,29 +1321,49 @@ export default function EventDetailPage() {
               <div className="space-y-6">
                 {/* Quick Info Sidebar */}
                 <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Quick Info</h3>
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
+                    Quick Info
+                  </h3>
                   <div className="space-y-3">
                     {[
                       { label: 'Event Type', value: config.label, icon: config.icon },
-                      { label: 'Status', value: statusCfg.label, badge: true, status: event.status || 'PUBLISHED' },
-                      { label: 'Visibility', value: VISIBILITY_BADGES[event.visibility || '']?.label || 'Family' },
-                      { label: 'Created', value: event.createdAt ? formatRelative(event.createdAt) : '' },
-                      { label: 'Updated', value: event.updatedAt ? formatRelative(event.updatedAt) : '' },
+                      {
+                        label: 'Status',
+                        value: statusCfg.label,
+                        badge: true,
+                        status: event.status || 'PUBLISHED',
+                      },
+                      {
+                        label: 'Visibility',
+                        value: VISIBILITY_BADGES[event.visibility || '']?.label || 'Family',
+                      },
+                      {
+                        label: 'Created',
+                        value: event.createdAt ? formatRelative(event.createdAt) : '',
+                      },
+                      {
+                        label: 'Updated',
+                        value: event.updatedAt ? formatRelative(event.updatedAt) : '',
+                      },
                       { label: 'Language', value: event.language || 'English' },
                       { label: 'Country', value: event.country || 'Not specified' },
-                    ].filter(i => i.value).map((item, i) => (
-                      <div key={i} className="flex items-center justify-between">
-                        <span className="text-xs text-slate-500 dark:text-slate-400">{item.label}</span>
-                        {item.badge ? (
-                          <StatusBadge status={item.status} />
-                        ) : (
-                          <span className="text-sm font-medium text-slate-900 dark:text-white">
-                            {item.icon && <span className="mr-1">{item.icon}</span>}
-                            {item.value}
+                    ]
+                      .filter((i) => i.value)
+                      .map((item, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                            {item.label}
                           </span>
-                        )}
-                      </div>
-                    ))}
+                          {item.badge ? (
+                            <StatusBadge status={item.status} />
+                          ) : (
+                            <span className="text-sm font-medium text-slate-900 dark:text-white">
+                              {item.icon && <span className="mr-1">{item.icon}</span>}
+                              {item.value}
+                            </span>
+                          )}
+                        </div>
+                      ))}
                   </div>
                 </div>
 
@@ -1030,10 +1384,16 @@ export default function EventDetailPage() {
                 {/* Related Events */}
                 {event.family && (
                   <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Related Events</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">More events from {event.family?.name || 'this family'}</p>
-                    <Link href={`/dashboard/families/${event.familyId || event.family?.id}/timeline`}
-                      className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 py-3 text-sm font-medium text-slate-600 hover:border-emerald-400 hover:text-emerald-600 transition-colors dark:border-slate-700 dark:text-slate-400 dark:hover:border-emerald-500 dark:hover:text-emerald-400">
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                      Related Events
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                      More events from {event.family?.name || 'this family'}
+                    </p>
+                    <Link
+                      href={`/dashboard/families/${event.familyId || event.family?.id}/timeline`}
+                      className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 py-3 text-sm font-medium text-slate-600 hover:border-emerald-400 hover:text-emerald-600 transition-colors dark:border-slate-700 dark:text-slate-400 dark:hover:border-emerald-500 dark:hover:text-emerald-400"
+                    >
                       <Calendar className="h-4 w-4" /> View All Family Events
                     </Link>
                   </div>
@@ -1073,7 +1433,9 @@ export default function EventDetailPage() {
           {/* Tags Tab */}
           {activeTab === 'tags' && (
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Tags & Keywords</h3>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+                Tags & Keywords
+              </h3>
               <EventTagsPanel
                 eventId={eventId}
                 initialTags={event.tags || []}
@@ -1152,25 +1514,38 @@ export default function EventDetailPage() {
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div className="glass-card p-4 text-center">
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{event._count?.comments || 0}</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {event._count?.comments || 0}
+                  </p>
                   <p className="text-xs text-slate-500">Comments</p>
                 </div>
                 <div className="glass-card p-4 text-center">
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{event._count?.reactions || 0}</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {event._count?.reactions || 0}
+                  </p>
                   <p className="text-xs text-slate-500">Reactions</p>
                 </div>
                 <div className="glass-card p-4 text-center">
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{event._count?.documents || 0}</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {event._count?.documents || 0}
+                  </p>
                   <p className="text-xs text-slate-500">Documents</p>
                 </div>
                 <div className="glass-card p-4 text-center">
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{event._count?.media || 0}</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {event._count?.media || 0}
+                  </p>
                   <p className="text-xs text-slate-500">Media</p>
                 </div>
               </div>
               <div className="glass-card p-6">
-                <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Event Timeline</h3>
-                <p className="text-sm text-slate-500">Created {event.createdAt ? formatRelative(event.createdAt) : ''} Â· Last updated {event.updatedAt ? formatRelative(event.updatedAt) : ''}</p>
+                <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">
+                  Event Timeline
+                </h3>
+                <p className="text-sm text-slate-500">
+                  Created {event.createdAt ? formatRelative(event.createdAt) : ''} Â· Last updated{' '}
+                  {event.updatedAt ? formatRelative(event.updatedAt) : ''}
+                </p>
               </div>
             </div>
           )}

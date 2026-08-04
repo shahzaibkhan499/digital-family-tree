@@ -47,3 +47,5 @@ yarn-error.log*
 # Misc
 *.pem
 .vercel/
+
+.reticle/

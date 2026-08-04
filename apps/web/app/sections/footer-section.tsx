@@ -35,32 +35,57 @@ export function FooterSection() {
           <FooterCol>
             <FooterSectionTitle>Product</FooterSectionTitle>
             <FooterLinkList>
-              <li><FooterLink href="#features">Features</FooterLink></li>
-              <li><FooterLink href="#how-it-works">How It Works</FooterLink></li>
-              <li><FooterLink href="#technology">Technology</FooterLink></li>
-              <li><FooterLink href="#roadmap">Roadmap</FooterLink></li>
-              <li><FooterLink href="#faq">FAQ</FooterLink></li>
+              <li>
+                <FooterLink href="#features">Features</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="#how-it-works">How It Works</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="#benefits">Benefits</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="#faq">FAQ</FooterLink>
+              </li>
             </FooterLinkList>
           </FooterCol>
 
           <FooterCol>
             <FooterSectionTitle>Company</FooterSectionTitle>
             <FooterLinkList>
-              <li><FooterLink href="/#about">About Us</FooterLink></li>
-              <li><FooterLink href="/">Blog</FooterLink></li>
-              <li><FooterLink href="/">Careers</FooterLink></li>
-              <li><FooterLink href="/">Press Kit</FooterLink></li>
+              <li>
+                <FooterLink href="/#about">About Us</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="/">Blog</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="/">Careers</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="/">Press Kit</FooterLink>
+              </li>
             </FooterLinkList>
           </FooterCol>
 
           <FooterCol>
             <FooterSectionTitle>Support</FooterSectionTitle>
             <FooterLinkList>
-              <li><FooterLink href="/login">Help Center</FooterLink></li>
-              <li><FooterLink href={`mailto:${contactEmail}`}>Contact Us</FooterLink></li>
-              <li><FooterLink href="/">Privacy Policy</FooterLink></li>
-              <li><FooterLink href="/">Terms of Service</FooterLink></li>
-              <li><FooterLink href={`mailto:${contactEmail}`}>{contactEmail}</FooterLink></li>
+              <li>
+                <FooterLink href="/login">Help Center</FooterLink>
+              </li>
+              <li>
+                <FooterLink href={`mailto:${contactEmail}`}>Contact Us</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="/">Privacy Policy</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="/">Terms of Service</FooterLink>
+              </li>
+              <li>
+                <FooterLink href={`mailto:${contactEmail}`}>{contactEmail}</FooterLink>
+              </li>
             </FooterLinkList>
           </FooterCol>
         </FooterGrid>

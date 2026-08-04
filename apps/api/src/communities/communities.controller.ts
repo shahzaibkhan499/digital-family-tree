@@ -170,10 +170,7 @@ export class CommunitiesController {
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'List community join requests' })
-  async getRequests(
-    @Param('id') communityId: string,
-    @Query('status') status?: string,
-  ) {
+  async getRequests(@Param('id') communityId: string, @Query('status') status?: string) {
     return this.communitiesService.getRequests(communityId, status);
   }
 
@@ -185,35 +182,38 @@ export class CommunitiesController {
     return this.communitiesService.getRequestStats(communityId);
   }
 
-  @Patch('requests/:requestId/approve')
+  @Patch(':id/requests/:requestId/approve')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Approve a community join request' })
   async approveRequest(
     @CurrentUser('id') userId: string,
+    @Param('id') communityId: string,
     @Param('requestId') requestId: string,
   ) {
     return this.communitiesService.approveRequest(userId, requestId);
   }
 
-  @Patch('requests/:requestId/reject')
+  @Patch(':id/requests/:requestId/reject')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Reject a community join request' })
   async rejectRequest(
     @CurrentUser('id') userId: string,
+    @Param('id') communityId: string,
     @Param('requestId') requestId: string,
     @Body() dto?: { response?: string },
   ) {
     return this.communitiesService.rejectRequest(userId, requestId, dto?.response);
   }
 
-  @Delete('requests/:requestId')
+  @Delete(':id/requests/:requestId')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancel a community join request' })
   async cancelRequest(
     @CurrentUser('id') userId: string,
+    @Param('id') communityId: string,
     @Param('requestId') requestId: string,
   ) {
     return this.communitiesService.cancelRequest(userId, requestId);
